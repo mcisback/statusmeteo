@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Forum App</title>
+    
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        #mainWrapper > header {
+            background-color: coral;
+            text-align: center;
+        }
+        #mainWrapper > header > h1 {
+            color: white;
+        }
+
+        .hide {
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+        /* MODAL STYLES
+        -------------------------------*/
+        modal {
+        /* modals are hidden by default */
+            display: none;
+        }
+        modal .modal {
+            /* modal container fixed across whole screen */
+            
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            /* z-index must be higher than .modal-background */
+            
+            z-index: 1000;
+            /* enables scrolling for tall modals */
+            
+            overflow: auto;
+        }
+        modal .modal .modal-body {
+            padding: 20px;
+            background: #fff;
+            /* margin exposes part of the modal background */
+
+            margin: 40px;
+        }
+        modal .modal-background {
+        /* modal background fixed across whole screen */
+
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            /* semi-transparent black  */
+
+            background-color: #000;
+            opacity: 0.75;
+            /* z-index must be below .modal and above everything else  */
+
+            z-index: 900;
+        }
+        body.modal-open {
+        /* body overflow is hidden to hide main scrollbar when modal window is open */
+
+            overflow: hidden;
+        }
+
+        .topic-head {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div id="mainWrapper" class="container-fluid" ng-app="forumApp">
+
+        <header class="container-fluid">
+            <h1>Forum</h1>
+        </header>
+
+        <!-- Todo List -->
+        <div class="container-fluid mx-auto" style="width: 90%; height: 100%;" ng-controller="ForumController as forum" ng-init="onload()">
+            <script type="text/ng-template" id="topicTemplate">
+                <div class="container-fluid topic">
+                    <div class="container-fluid topic-head" ng-click="showTopicText(this)">
+                        <h2>{{topic.title}} : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}}</h2>
+                        <p>{{topic.subtitle}}</p>
+                    </div>
+                    <div class="container-fluid topic-content">
+                        <p class="hide">{{topic.text}}</p>
+                    </div>
+                </div>
+                <div class="container-fluid" ng-if="topic.topics">
+                    <div class="container-fluid topic" ng-repeat="topic in topic.topics" ng-include="'topicTemplate'" style="margin-left: 3rem;">
+                        <div class="container-fluid topic-head" ng-click="showTopicText(this)">
+                            <h3>{{topic.title}} : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}}</h3>
+                            <p>{{topic.subtitle}}</p>
+                        </div>
+                        <div class="container-fluid topic-content">
+                            <p class="hide">{{topic.text}}</p>
+                        </div>
+                    </div>
+                </div>
+            </script>
+            <span class="h1 container-fluid">
+                <span style="justify-self: flex-start;">Threads</span>
+                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('editor-modal')">Nuovo</button>
+                <!-- <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="sortAll(topics)">Sort</button> -->
+            </span>
+            <div class="container-fluid  mt-5 forum">
+                <div class="container-fluid topic" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
+            </div>
+        </div>
+
+        <modal id="editor-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>A Custom Modal!</h1>
+                    <p>
+                        Home page text: <input type="text" />
+                    </p>
+                    <button ng-click="closeModal('editor-modal');">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
