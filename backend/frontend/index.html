@@ -69,8 +69,11 @@
         }
         body.modal-open {
         /* body overflow is hidden to hide main scrollbar when modal window is open */
-
             overflow: hidden;
+        }
+
+        .modal-open .modal {
+            display: block;
         }
 
         .topic-head {
@@ -79,16 +82,16 @@
 
     </style>
 </head>
-<body>
+<body ng-app="forumApp">
     
-    <div id="mainWrapper" class="container-fluid" ng-app="forumApp">
+    <div id="mainWrapper" class="container-fluid" ng-controller="ForumController as forum" ng-init="onload()">
 
         <header class="container-fluid">
             <h1>Forum</h1>
         </header>
 
         <!-- Todo List -->
-        <div class="container-fluid mx-auto" style="width: 90%; height: 100%;" ng-controller="ForumController as forum" ng-init="onload()">
+        <div class="container-fluid mx-auto" style="width: 90%; height: 100%;">
             <script type="text/ng-template" id="topicTemplate">
                 <div class="container-fluid topic">
                     <div class="container-fluid topic-head" ng-click="showTopicText(this)">
@@ -101,7 +104,7 @@
                 </div>
                 <div class="container-fluid" ng-if="topic.topics">
                     <div class="container-fluid topic" ng-repeat="topic in topic.topics" ng-include="'topicTemplate'" style="margin-left: 3rem;">
-                        <div class="container-fluid topic-head" ng-click="showTopicText(this)">
+                        <div class="container-fluid topic-head" ng-click="showTopicText($event, this)">
                             <h3>{{topic.title}} : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}}</h3>
                             <p>{{topic.subtitle}}</p>
                         </div>
@@ -124,11 +127,19 @@
         <modal id="editor-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>A Custom Modal!</h1>
+                    <h1>Add Topic</h1>
                     <p>
-                        Home page text: <input type="text" />
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        <br>
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
                     </p>
-                    <button ng-click="closeModal('editor-modal');">Close</button>
+
+                    <textarea ng-model="forum.topic.text" id="ckeditor" ckeditor></textarea>
+
+                    <br>
+
+                    <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="closeModal('editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -142,6 +153,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+
+    <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
 
     <script src="app.js"></script>
 
