@@ -35,7 +35,7 @@ var app = angular.module('forumApp', [])
 app.service('ForumApiService', function($http) {
     api = {}
 
-    api.endpoint = "http://localhost:8081"
+    api.endpoint = "http://localhost:8081/api"
 
     api.getTopics = function() {
         return $http.get(api.endpoint + '/topics')
