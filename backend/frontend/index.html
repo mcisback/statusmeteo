@@ -4,19 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Forum App</title>
+    <title>Status Meteo</title>
     
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
     <style>
-        #mainWrapper > header {
-            background-color: coral;
-            text-align: center;
-        }
-        #mainWrapper > header > h1 {
-            color: white;
-        }
-
         .hide {
             display: none;
         }
@@ -80,6 +72,33 @@
             cursor: pointer;
         }
 
+        #mainWrapper {
+            margin: 0;
+            padding: 0;
+        }
+
+        #mainWrapper > header {
+            background-color: #339966;
+            text-align: center;
+        }
+        
+        #mainWrapper > header > h1 {
+            color: white;
+        }
+
+        body {
+            background-image: url('assets/img/bg.jpg');
+            background-repeat: repeat;
+        }
+
+        #mainWrapper > .jumbotron {
+            background-color: transparent;
+        }
+
+        #mainWrapper > .jumbotron h1 {
+            text-align: center;
+        }
+
     </style>
 </head>
 <body ng-app="forumApp">
@@ -87,8 +106,18 @@
     <div id="mainWrapper" class="container-fluid" ng-controller="ForumController as forum" ng-init="onload()">
 
         <header class="container-fluid">
-            <h1>Forum</h1>
+            <h1>StatusMeteo</h1>
         </header>
+
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <h1 class="display-4">Welcome to STATUS METEO!</h1>
+                <p class="lead">
+                    In questo forum ognuno può esprimere liberamente la propria opinione nei limiti stabiliti dal regolamento. La qualità del forum dipende da quella dei vostri interventi. Fatene buon uso!
+                    Descrizione sito amatoriale durante l utilizzo, consigli di acquisto e racconto delle proprie esperienze. Come per l area Discussioni, i thread verranno riportati in evidenza dagli aggiornamenti
+                </p>
+            </div>
+        </div>
 
         <!-- Todo List -->
         <div class="container-fluid mx-auto" style="width: 90%; height: 100%;">
@@ -116,7 +145,7 @@
             </script>
             <span class="h1 container-fluid">
                 <span style="justify-self: flex-start;">Threads</span>
-                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('editor-modal')">Nuovo</button>
+                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('add-topic-editor-modal')">Nuovo</button>
                 <!-- <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="sortAll(topics)">Sort</button> -->
             </span>
             <div class="container-fluid  mt-5 forum">
@@ -124,22 +153,108 @@
             </div>
         </div>
 
-        <modal id="editor-modal">
+        <modal id="add-topic-editor-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>Add Topic</h1>
+                    <h1>Add New Topic</h1>
                     <p>
                         Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
                         <br>
                         Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
                     </p>
 
-                    <textarea ng-model="forum.topic.text" id="ckeditor" ckeditor></textarea>
+                    <textarea ng-model="forum.topic.text" id="ckeditor-add" ckeditor></textarea>
 
                     <br>
 
                     <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Save</button>
-                    <button ng-click="closeModal('editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeModal('add-topic-editor-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+        <modal id="reply-topic-editor-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>Reply</h1>
+                    <p>
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        <br>
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
+                    </p>
+
+                    <textarea ng-model="forum.topic.text" id="ckeditor-reply" ckeditor></textarea>
+
+                    <br>
+
+                    <input type="hidden" name="id" ng-model="forum.topic.id">
+
+                    <button ng-click="forum.replyTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="closeModal('reply-topic-editor-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+        <modal id="edit-topic-editor-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>Edit Topic</h1>
+                    <p>
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        <br>
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
+                    </p>
+
+                    <textarea ng-model="forum.topic.text" id="ckeditor-edit" ckeditor></textarea>
+
+                    <br>
+
+                    <input type="hidden" name="id" ng-model="forum.topic.id">
+
+                    <button ng-click="forum.editTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="closeModal('edit-topic-editor-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+        <modal id="login-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>Login</h1>
+                    <p>
+                        Username: <input type="text" name="topic" ng-model="forum.newUser.username" />
+                        <br>
+                        Password: <input type="text" name="subject" ng-model="forum.newUser.password" />
+                    </p>
+
+                    <br>
+
+                    <button ng-click="forum.login(forum.newUser);" class="btn btn-primary">Login</button>
+                    <button ng-click="closeModal('login-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+        <modal id="register-user-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>Register New User</h1>
+                    <p>
+                        Username: <input type="text" name="topic" ng-model="forum.newUser.username" />
+                        <br>
+                        Password: <input type="text" name="subject" ng-model="forum.newUser.password" />
+                        <br>
+                        Email: <input type="text" name="subject" ng-model="forum.newUser.email" />
+                    </p>
+
+                    <br>
+
+                    <button ng-click="forum.registerNewUser(forum.newUser);" class="btn btn-primary">Register</button>
+                    <button ng-click="closeModal('register-user-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>

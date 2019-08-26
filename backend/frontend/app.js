@@ -75,12 +75,14 @@ app.service('ModalService', function() {
     function Open(id) {
         // open modal specified by id
         var modal = _.findWhere(modals, { id: id });
+
         modal.open();
     }
 
     function Close(id) {
         // close modal specified by id
         var modal = _.findWhere(modals, { id: id });
+
         modal.close();
     }
 })
@@ -185,9 +187,8 @@ var forumController = app.controller(
     console.log('ForumApiService: ', ForumApiService)
 
     forum.topic = {
-        id: 0,
         parent: 0,
-        level: 0,
+        level: 1,
         title:'',
         subtitle: '',
         text: "",
@@ -198,7 +199,9 @@ var forumController = app.controller(
 
     forum.addNewTopic = function(topic) {
         topic.timestamp = Date.now()
+        topic.maxTm = topic.timestamp
         topic.level = 1
+        topic.parent = 0
 
         console.log('New Topic is: ', topic)
 
