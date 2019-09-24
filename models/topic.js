@@ -48,7 +48,8 @@ const topicSchema = new mongoose.Schema({
         type: Array,
         unique: false
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    forum: { type: mongoose.Schema.Types.ObjectId, ref: 'Forum' }
 }, {timestamps: true});
 
 const Topic = mongoose.model('Topic', topicSchema);

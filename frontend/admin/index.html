@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Status Meteo</title>
+    
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        .hide {
+            display: none;
+        }
+        .show {
+            display: block;
+        }
+        /* MODAL STYLES
+        -------------------------------*/
+        modal {
+        /* modals are hidden by default */
+            display: none;
+        }
+        modal .modal {
+            /* modal container fixed across whole screen */
+            
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            /* z-index must be higher than .modal-background */
+            
+            z-index: 1000;
+            /* enables scrolling for tall modals */
+            
+            overflow: auto;
+        }
+        modal .modal .modal-body {
+            padding: 20px;
+            background: #fff;
+            /* margin exposes part of the modal background */
+
+            margin: 40px;
+        }
+        modal .modal-background {
+        /* modal background fixed across whole screen */
+
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            /* semi-transparent black  */
+
+            background-color: #000;
+            opacity: 0.75;
+            /* z-index must be below .modal and above everything else  */
+
+            z-index: 900;
+        }
+        body.modal-open {
+        /* body overflow is hidden to hide main scrollbar when modal window is open */
+            overflow: hidden;
+        }
+
+        .modal-open .modal {
+            display: block;
+        }
+
+        .topic-head {
+            cursor: pointer;
+        }
+
+        #mainWrapper {
+            margin: 0;
+            padding: 0;
+        }
+
+        #mainWrapper > header {
+            background-color: #222;
+            text-align: center;
+            color: white;
+        }
+        
+        #mainWrapper > header > h1 {
+            color: white;
+        }
+
+        body {
+            background-image: url('assets/img/bg.jpg');
+            background-repeat: repeat;
+        }
+
+        #mainWrapper > .jumbotron {
+            background-color: transparent;
+        }
+
+        #mainWrapper > .jumbotron h1 {
+            text-align: center;
+        }
+
+        .Fix {
+            text-align: center;
+            vertical-align: middle;
+            font-size: small;
+            font-family: Verdana;
+            color: #EFEFEF;
+        }
+
+        .forum-head tr {
+            padding: 0.5rem 0 0.5rem 0;
+            display: block;
+        }
+
+        .forum {
+            background-color: white;
+        }
+
+        .forum-headers-label {
+            background-color: #000080;
+            color: white;
+            font-family: Verdana,Geneva,sans-serif;
+            font-size: 9px;
+            font-weight: bold;
+            display: flex;
+            flex-flow: row;
+        }
+
+        .forum-headers-label > div {
+            border-left: thin white 2px;
+            border-right: thin white 2px;
+        }
+
+    </style>
+</head>
+<body ng-app="adminApp">
+    
+    <div id="mainWrapper" class="container-fluid" ng-controller="AdminController as Admin" ng-init="onload()">
+
+        <header class="container-fluid">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: transparent !important;">
+                <a class="navbar-brand" href="#">StatusMeteo Admin Area</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                      <a class="nav-link" href="#">Forum Home</a>
+                    </li>
+                    <li class="nav-item dropdown" ng-if="!isLogged()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Login
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="#" ng-click="openModal('login-modal')">Login</a>
+                            <a class="dropdown-item" href="#" ng-click="openModal('register-user-modal')">Register</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown" ng-if="isLogged()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Benvenuto {{current_user.username}}
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="#" ng-click="forum.doLogout()">Logout</a>
+                        </div>
+                    </li>
+                  </ul>
+                  <!-- <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                  </form> -->
+                </div>
+              </nav>
+        </header>
+
+        <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px;">
+            <div class="container">
+                <h1 class="display-4">Welcome to STATUS METEO Admin Area!</h1>
+                <p class="lead">
+                    In questo forum ognuno può esprimere liberamente la propria opinione nei limiti stabiliti dal regolamento. La qualità del forum dipende da quella dei vostri interventi. Fatene buon uso!
+                    Descrizione sito amatoriale durante l utilizzo, consigli di acquisto e racconto delle proprie esperienze. Come per l area Discussioni, i thread verranno riportati in evidenza dagli aggiornamenti
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+
+    <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
+
+    <script src="../admin_app.js"></script>
+
+</body>
+</html>

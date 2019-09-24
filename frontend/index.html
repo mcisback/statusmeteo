@@ -99,6 +99,54 @@
             text-align: center;
         }
 
+        .Fix {
+            text-align: center;
+            vertical-align: middle;
+            font-size: small;
+            font-family: Verdana;
+            color: #EFEFEF;
+        }
+
+        .forum-head tr {
+            padding: 0.5rem 0 0.5rem 0;
+            display: block;
+        }
+
+        .forum {
+            background-color: white;
+        }
+
+        .forum-headers-label {
+            background-color: #000080;
+            color: white;
+            font-family: Verdana,Geneva,sans-serif;
+            font-size: 9px;
+            font-weight: bold;
+            display: flex;
+            flex-flow: row;
+        }
+
+        .forum-headers-label > div {
+            border-left: thin white 2px;
+            border-right: thin white 2px;
+        }
+
+        .forum-headers-table, .forum-headers-table thead tr {
+            width: 100%;
+        }
+        
+        .forum-tab {
+            font-family: Verdana,Geneva,Tahoma,sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+        }
+
+        .forum-tab-active {
+            font-family: Verdana,Geneva,Tahoma,sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 30px !important;
+        }
+
     </style>
 </head>
 <body ng-app="forumApp">
@@ -106,10 +154,45 @@
     <div id="mainWrapper" class="container-fluid" ng-controller="ForumController as forum" ng-init="onload()">
 
         <header class="container-fluid">
-            <h1>StatusMeteo</h1>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light" style="background-color: transparent !important;">
+                <a class="navbar-brand" href="#">StatusMeteo</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                      <a class="nav-link" href="#">Forum Home</a>
+                    </li>
+                    <li class="nav-item dropdown" ng-if="!isLogged()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Login
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="#" ng-click="openModal('login-modal')">Login</a>
+                            <a class="dropdown-item" href="#" ng-click="openModal('register-user-modal')">Register</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown" ng-if="isLogged()">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Benvenuto {{current_user.username}}
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="#" ng-click="openModal('edit-user-modal')">Modifica Profilo</a>
+                            <a class="dropdown-item" href="#" ng-click="forum.doLogout()">Logout</a>
+                        </div>
+                    </li>
+                  </ul>
+                  <!-- <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                  </form> -->
+                </div>
+              </nav>
         </header>
 
-        <div class="jumbotron jumbotron-fluid">
+        <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px;">
             <div class="container">
                 <h1 class="display-4">Welcome to STATUS METEO!</h1>
                 <p class="lead">
@@ -119,8 +202,22 @@
             </div>
         </div>
 
-        <!-- Todo List -->
+        <!-- Forum Threads -->
         <div class="container-fluid mx-auto" style="width: 90%; height: 100%;">
+            <!-- Forum List Nav -->
+            <div class="container-fluid forum-tabs-container" style="padding: 0;">
+                <nav class="nav nav-pills nav-fill" style="border-bottom:darkgray thin solid;">
+                    <!--<a class="nav-link active" href="#">Active</a>
+                    <a class="nav-link" href="#">Longer nav link</a>
+                    <a class="nav-link" href="#">Link</a>
+                    <a class="nav-link disabled" href="#">Disabled</a>-->
+                    <li class="nav-item" ng-repeat="f in forumList" style="border: 0; cursor: pointer;">
+                        <a class="nav-link forum-tab-active" ng-if="f.is_active" style="color: {{f.color}}">{{f.title}}</a>
+                        <a class="nav-link forum-tab" ng-click="loadForum($event, f)" ng-if="!f.is_active" style="color: {{f.color}}">{{f.title}}</a>
+                    </li>
+                </nav>
+            </div>
+            <hr>
             <script type="text/ng-template" id="topicTemplate">
                 <div class="container-fluid topic">
                     <div class="container-fluid topic-head" ng-click="showTopicText(this)">
@@ -143,24 +240,78 @@
                     </div>
                 </div>
             </script>
-            <span class="h1 container-fluid">
-                <span style="justify-self: flex-start;">Threads</span>
-                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('add-topic-editor-modal')">Nuovo</button>
+
+            <script type="text/ng-template" id="forumHeadTemplate">
+                <!-- <span style="justify-self: flex-start;">Threads</span>
+                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('add-topic-editor-modal')">Nuovo</button>-->
                 <!-- <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="sortAll(topics)">Sort</button> -->
-            </span>
-            <div class="container-fluid  mt-5 forum">
+                <table border="0" cellpadding="1" cellspacing="1" height="20" class="forum-head" style="min-width:540px; background-color:#215a94; border-color:#EFEFEF;" valign="absmiddle" width="100%">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="#">
+                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('add-topic-editor-modal')">
+                                </a>
+                            </td>
+                            <td>
+                                <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image">
+                            </td>
+                            <td class="Fix" nowrap="nowrap"><b>&nbsp;Search&nbsp;</b></td>
+                            <td><input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text"></td>
+                            <td class="Fix" nowrap="nowrap"><b>&nbsp;Data&nbsp;</b></td>
+                            <td class="Fix" nowrap="nowrap"><input maxlength="10" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true"><mat-datepicker-toggle class="mat-datepicker-toggle" matsuffix=""><button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0"><span class="mat-button-wrapper"><!----><svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0z" fill="none"></path><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path></svg></span><div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
+                                <div class="mat-button-focus-overlay"></div></button></mat-datepicker-toggle><mat-datepicker></mat-datepicker></td>
+                            <td width="99%">&nbsp;</td>
+                            <td class="Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></td>
+                            <td><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text"></td>
+                            <td align="left"><img src="assets/Blu_Prev.gif" title="Pagina precedente" type="image"></td>
+                            <td align="right"><img src="assets/Blu_Next.gif" title="Pagina successiva" type="image"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </script>
+
+            <!-- Forum Header Top -->
+            <div class="container-fluid pl-0 pr-0" ng-include="'forumHeadTemplate'"></div>
+
+            <table class="forum-headers-table">
+                <thead class="forum-headers-label">
+                    <tr style="display: flex; text-align: center; flex-flow: row; justify-content: center;">
+                        <td style="width:5%;">&nbsp;</td>
+                        <td style="width:60%; text-align: center;">Titolo</td>
+                        <td style="width:10%; text-align: center;">Risposte</td>
+                        <td style="width:10%; text-align: center;">Autore e Localit&agrave;</td>
+                        <td style="width:10%; text-align: center;">Ultimo Agg.</td>
+                        <td style="width:5%;">&nbsp;</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+
+            <div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
                 <div class="container-fluid topic" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
             </div>
+
+            <!-- Forum Header Bottom -->
+            <div class="container-fluid pl-0 pr-0" ng-include="'forumHeadTemplate'"></div>
         </div>
 
         <modal id="add-topic-editor-modal">
-            <div class="modal">
+            <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
                     <h1>Add New Topic</h1>
+                    <p class="alert alert-danger" ng-if="addNewTopicError">
+                        {{addNewTopicError}}
+                    </p>
+                    <p class="alert alert-success" ng-if="addNewTopicSuccess">
+                        {{addNewTopicSuccess}}
+                    </p>
                     <p>
-                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
-                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
                     </p>
 
                     <textarea ng-model="forum.topic.text" id="ckeditor-add" ckeditor></textarea>
@@ -168,6 +319,16 @@
                     <br>
 
                     <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="closeModal('add-topic-editor-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal" ng-if="!isLogged()">
+                <div class="modal-body">
+                    <h1>Errore</h1>
+                    Devi fare il login per procedere
+
+                    <br>
+
                     <button ng-click="closeModal('add-topic-editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
@@ -179,9 +340,9 @@
                 <div class="modal-body">
                     <h1>Reply</h1>
                     <p>
-                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
-                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
                     </p>
 
                     <textarea ng-model="forum.topic.text" id="ckeditor-reply" ckeditor></textarea>
@@ -202,9 +363,9 @@
                 <div class="modal-body">
                     <h1>Edit Topic</h1>
                     <p>
-                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" />
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
-                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" />
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
                     </p>
 
                     <textarea ng-model="forum.topic.text" id="ckeditor-edit" ckeditor></textarea>
@@ -224,11 +385,20 @@
             <div class="modal">
                 <div class="modal-body">
                     <h1>Login</h1>
-                    <p>
-                        Username: <input type="text" name="topic" ng-model="forum.newUser.username" />
-                        <br>
-                        Password: <input type="text" name="subject" ng-model="forum.newUser.password" />
+
+                    <p class="alert alert-danger" ng-if="loginErrorMsg">
+                        {{loginErrorMsg}}
                     </p>
+
+                    <p>
+                        Username: <input type="text" name="topic" class="form-control" ng-model="forum.newUser.login" />
+                        <br>
+                        Password: <input type="text" name="subject" class="form-control" ng-model="forum.newUser.password" />
+                    </p>
+
+                    <br>
+
+                    <a href="#" ng-click="openModal('register-user-modal')">Registrati</a>
 
                     <br>
 
@@ -243,18 +413,52 @@
             <div class="modal">
                 <div class="modal-body">
                     <h1>Register New User</h1>
+
+                    <p class="alert alert-success" ng-if="registerSuccessMsg">
+                        {{registerSuccessMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="registerErrorMsg">
+                        {{registerErrorMsg}}
+                    </p>
+
                     <p>
-                        Username: <input type="text" name="topic" ng-model="forum.newUser.username" />
+                        Username: <input type="text" name="topic" ng-model="forum.newUser.username" class="form-control" />
                         <br>
-                        Password: <input type="text" name="subject" ng-model="forum.newUser.password" />
+                        Password: <input type="text" name="subject" ng-model="forum.newUser.password" class="form-control" />
                         <br>
-                        Email: <input type="text" name="subject" ng-model="forum.newUser.email" />
+                        Email: <input type="text" name="subject" ng-model="forum.newUser.email" class="form-control" />
                     </p>
 
                     <br>
 
                     <button ng-click="forum.registerNewUser(forum.newUser);" class="btn btn-primary">Register</button>
                     <button ng-click="closeModal('register-user-modal');" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
+        <modal id="edit-user-modal">
+            <div class="modal">
+                <div class="modal-body" ng-if="isLogged()">
+                    <h1>Edit User: {{current_user.username}}</h1>
+                    <p>
+                        Username: <input type="text" name="username" ng-model="forum.newUser.username" ng-init="forum.newUser.username = current_user.username" class="form-control" />
+                        <br>
+                        Nuova Password: <input type="password" name="password" ng-model="forum.newUser.newPassword" ng-init="forum.newUser.password = ''" class="form-control" />
+                        <br>
+                        Email: <input type="text" name="email" ng-model="forum.newUser.email" ng-init="forum.newUser.email = current_user.email" class="form-control" />
+                    </p>
+
+                    <br>
+
+                    <button ng-click="forum.editUser(forum.newUser);" class="btn btn-primary">Salva Modifiche</button>
+                    <button ng-click="closeModal('edit-user-modal');" class="btn btn-primary">Close</button>
+                </div>
+                <div class="modal-body" ng-if="!isLogged()">
+                    <h1>Devi Essere Loggato Per Modificare Il Tuo Profilo</h1>
+                    <button ng-click="closeModal('edit-user-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -268,6 +472,9 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+
+    <!-- Angular Material Library -->
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.12/angular-material.min.js"></script> -->
 
     <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
 

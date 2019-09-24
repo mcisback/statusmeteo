@@ -16,8 +16,11 @@ console.log('Using ENV: ', env)
 const mongoose = require('mongoose')
 const User = require('./models/user')
 const Topic = require('./models/topic')
+const Forum = require('./models/forum')
 
-const models = { User, Topic }
+const models = { User, Topic, Forum }
+
+const api_endpoint = '/api'
 
 const connectDb = () => {
     console.log('Connecting to DB: ', config[env].databaseUrl)
@@ -50,6 +53,8 @@ const checkToken = (req, res, next) => {
 
         jwt.verify(token, config[env].secretKey, (err, decoded) => {
             if (err) {
+                console.log('Token is not valid')
+
                 return res.sendStatus(403).json({
                     success: false,
                     message: 'Token is not valid'
@@ -60,6 +65,8 @@ const checkToken = (req, res, next) => {
             }
         })
     } else {
+        console.log('Token is not present')
+        
         return res.sendStatus(403).json({
             success: false,
             message: 'Auth token is not supplied'
@@ -74,28 +81,39 @@ app.get('/', function(req, res) {
     res.sendFile('index.html')
 })
 
+// Get all forums
+app.get(api_endpoint + '/forums', function (req, res) {
+    models.Forum.find({}, function(err, data) {
+        console.log('GET forums: ', err, data, data.length)
+
+        res.json(data)
+    })
+})
+
 // Get all topics
-app.get('/api/topics', function (req, res) {
+app.get(api_endpoint + '/topics', function (req, res) {
     models.Topic.find({}, function(err, data) {
-        console.log(err, data, data.length)
+        console.log('GET topics: ', err, data, data.length)
 
         res.json(data)
     })
 })
 
 // Create New Topic
-app.post('/api/topic', checkToken, function (req, res) {
+app.post(api_endpoint + '/topic', checkToken, function (req, res) {
     console.log('Received new topic request: ', req.body)
 
     const newTopic = new models.Topic(req.body)
 
     newTopic.save()
+        .then(topic => console.log('Saved Topic: ', topic))
+        .catch(err => console.log('Error Saving: ', err))
 
     res.json({"msg": req.body})
 })
 
 // Delete Topic
-app.delete('/api/topic/:topicId', checkToken, function (req, res) {
+app.delete(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
 
     models.Topic.findById(req.params.topicId, function (err, doc) {
         if (err) {
@@ -111,12 +129,13 @@ app.delete('/api/topic/:topicId', checkToken, function (req, res) {
 })
 
 // Modify Topic
-app.put('/api/topic/:topicId', checkToken, function (req, res) {
+app.put(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
     res.json({"msg": "Not Yet Implemented"})
 })
 
 // Get all users (for admin)
-app.get('/api/users', function (req, res) {
+// TODO: Check if admin
+app.get(api_endpoint + '/users', checkToken, function (req, res) {
     models.User.find({}, function(err, data) {
         console.log(err, data, data.length)
 
@@ -125,22 +144,60 @@ app.get('/api/users', function (req, res) {
 })
 
 // Create New user (for registration)
-app.post('/api/user', function (req, res) {
-    res.json({"msg": "Not Yet Implemented"})
+app.post(api_endpoint + '/user/register', function (req, res) {
+    // res.json({"msg": "Not Yet Implemented"})
+
+    console.log('Creating new user with data: ', req.body)
+
+    models.User.create(req.body, (err, doc) => {
+        console.log('err, doc: ', err, doc)
+
+        if(err) {
+            console.log('Create User Error!!! ')
+
+            res.json({success: false, data: {
+                msg: err
+            }})
+        } else {
+            console.log('Create User Success!!! ')
+
+            res.json({success: true, data: {
+                msg: doc
+            }})
+        }
+    })
 })
 
 // Delete user (for user or admin)
-app.delete('/api/user/:userId', function (req, res) {
+app.delete(api_endpoint + '/user/delete/:userId', checkToken, function (req, res) {
     res.json({"msg": "Not Yet Implemented"})
 })
 
 // Modify user (for user or admin)
-app.put('/api/user/:userId', function (req, res) {
-    res.json({"msg": "Not Yet Implemented"})
+app.put(api_endpoint + '/user/edit/:userId', checkToken, function (req, res) {
+    // res.json({"msg": "Not Yet Implemented"})
+
+    console.log('Modifying User: ', req.params.userId)
+
+    models.User.findOneAndUpdate({_id: req.params.userId}, req.body, {upsert:false}, (err, doc) => {
+        if(err) {
+            console.log('Edit User Error!!! ')
+
+            res.json({success: false, data: {
+                msg: err
+            }})
+        } else {
+            console.log('Edit User Success!!! ')
+
+            res.json({success: true, data: {
+                msg: doc
+            }})
+        }
+    })
 })
 
 // Do Login
-app.post('/api/login', function (req, res) {
+app.post(api_endpoint + '/login', function (req, res) {
     console.log('New Login Request: ', req.body)
     console.log('User: ', req.body.login)
 
@@ -169,14 +226,14 @@ app.post('/api/login', function (req, res) {
         .catch(err => {
             console.log('User Login Error: ', err)
 
-            res.json({success: true, data: err})
+            res.json({success: false, data: err})
         })
 })
 
 const seedDb = async () => {
     const superAdmin = new models.User({
         username: 'supermeteo',
-        password: 'supermeteo!!!',
+        password: 'supermeteo',
         email: 'info@statusmeteo.it',
         group_id: 1000,
         is_admin: true,
@@ -185,11 +242,39 @@ const seedDb = async () => {
 
     const normalUser = new models.User({
         username: 'normaluser',
-        password: 'normaluser!!!',
+        password: 'normaluser',
         email: 'normaluser@gmail.com',
         group_id: 4001,
         is_admin: false,
         registered_at: new Date().getTime()
+    })
+
+    const forum1 = new models.Forum({
+        title: 'NowCasting',
+        color: '#00f',
+        order: 0,
+        is_active: true
+    })
+
+    const forum2 = new models.Forum({
+        title: 'Discussioni',
+        color: 'green',
+        order: 1,
+        is_active: false
+    })
+
+    const forum3 = new models.Forum({
+        title: 'Varie & Strumentazione',
+        color: '#7e5530',
+        order: 2,
+        is_active: false
+    })
+
+    const forum4 = new models.Forum({
+        title: 'Funghi',
+        color: 'red',
+        order: 3,
+        is_active: false
     })
 
     const topic1 = new models.Topic({
@@ -200,7 +285,8 @@ const seedDb = async () => {
         timestamp: new Date().getTime(),
         maxTm: new Date().getTime(),
         topics: [],
-        user: normalUser.id
+        user: normalUser.id,
+        forum: forum1.id
     })
 
     topic1.topics.push({
@@ -211,7 +297,8 @@ const seedDb = async () => {
         timestamp: new Date().getTime() + 100,
         maxTm: new Date().getTime() + 100,
         topics: [],
-        user: normalUser.id
+        user: normalUser.id,
+        forum: forum1.id
     })
 
     const topic2 = new models.Topic({
@@ -222,11 +309,43 @@ const seedDb = async () => {
         timestamp: new Date().getTime(),
         maxTm: new Date().getTime(),
         topics: [],
-        user: normalUser.id
+        user: normalUser.id,
+        forum: forum2.id
     })
+
+    const topic3 = new models.Topic({
+        parent: 0,
+        title:'AngularJS',
+        subtitle: 'Learn Angular',
+        text: "Lorem Ipsum dsadnoasdnoasdmoa 1",
+        timestamp: new Date().getTime(),
+        maxTm: new Date().getTime(),
+        topics: [],
+        user: normalUser.id,
+        forum: forum2.id
+    })
+
+    topic3.topics.push({
+        parent: topic1.id,
+        title:'AngularJS Basics',
+        subtitle: 'Learn Angular Basics',
+        text: "Lorem Ipsum dsadnoasdnoasdmoa 3",
+        timestamp: new Date().getTime() + 100,
+        maxTm: new Date().getTime() + 100,
+        topics: [],
+        user: normalUser.id,
+        forum: forum2.id
+    })
+
+    await forum1.save()
+    await forum2.save()
+    await forum3.save()
+    await forum4.save()
 
     await topic1.save()
     await topic2.save()
+    await topic3.save()
+
     await superAdmin.save()
     await normalUser.save()
 }
@@ -238,11 +357,12 @@ connectDb().then(async () => {
     if (eraseDatabaseOnSync) {
         await Promise.all([
           models.User.deleteMany({}),
+          models.Forum.deleteMany({}),
           models.Topic.deleteMany({}),
         ]);
-    }
 
-    seedDb()
+        seedDb()
+    }
 
     server = app.listen(config[env].port, () => {
         const host = server.address().address

@@ -12,6 +12,15 @@
     })
 */
 
+const sortDescByOrder = (a, b) => {
+    var keyA = a.order,
+        keyB = b.order;
+    // Compare the 2 order
+    if(keyA < keyB) return 1;
+    if(keyA > keyB) return -1;
+    return 0;
+}
+
 const sortDesc = (a, b) => {
     var keyA = new Date(a.timestamp),
         keyB = new Date(b.timestamp);
@@ -37,14 +46,46 @@ app.service('ForumApiService', function($http) {
 
     api.endpoint = "http://localhost:8082/api"
 
+    api.setJWTToken = function(jwt_token) {
+        // $http.defaults.headers.Authorization = 'Bearer ' + jwt_token;
+        $http.defaults.headers.common.Authorization = 'Bearer ' + jwt_token;
+    }
+
+    api.unsetJWTToken = function() {
+        // $http.defaults.headers.Authorization = '';
+        $http.defaults.headers.common.Authorization = '';
+    }
+
     api.getTopics = function() {
         return $http.get(api.endpoint + '/topics')
+    }
+
+    api.getForums = function() {
+        return $http.get(api.endpoint + '/forums')
     }
 
     api.addNewTopic = function(topic) {
         $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/topic', JSON.stringify(topic))
+    }
+
+    api.login = function(user) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.post(api.endpoint + '/login', JSON.stringify(user))
+    }
+
+    api.registerNewUser = function(user) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.post(api.endpoint + '/user/register', JSON.stringify(user))
+    }
+
+    api.editUser = function(_id, user) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.put(api.endpoint + '/user/edit/' + _id, JSON.stringify(user))
     }
 
     return api
@@ -85,6 +126,41 @@ app.service('ModalService', function() {
 
         modal.close();
     }
+})
+
+app.service('UserService', function() {
+    var current_user = {}; // array of modals on the page
+    var service = {};
+    var jwt_token = '';
+    var is_logged = false;
+
+    service.saveNewUser = function(user, _jwt_token) {
+        current_user = user
+        jwt_token = _jwt_token
+
+        window.localStorage.setItem('user', JSON.stringify(current_user))
+        window.localStorage.setItem('token', jwt_token)
+
+        is_logged = true
+    }
+
+    service.getUserAndToken = function() {
+        return {
+            user: JSON.parse(window.localStorage.getItem('user')),
+            token: window.localStorage.getItem('token')
+        }
+    }
+
+    service.isLogged = function() {
+        return (window.localStorage['user'] || false) && (window.localStorage['token'] || false)
+    }
+
+    service.deleteUser = function() {
+        window.localStorage.removeItem('user')
+        window.localStorage.removeItem('token')
+    }
+
+    return service;
 })
 
 app.directive('ckeditor', function Directive($rootScope) {
@@ -179,7 +255,7 @@ app.directive('modal', function(ModalService) {
 
 var forumController = app.controller(
     'ForumController',
-    ['$scope', 'ModalService', 'ForumApiService', function($scope, ModalService, ForumApiService) {
+    ['$scope', 'UserService', 'ModalService', 'ForumApiService', function($scope, UserService, ModalService, ForumApiService) {
     var forum = this;
 
     console.log('$scope: ', $scope)
@@ -194,7 +270,41 @@ var forumController = app.controller(
         text: "",
         timestamp: 0,
         maxTm: 0,
-        topics: []
+        topics: [],
+        user: ''
+    }
+
+    forum.newUser = {
+        login: '',
+        username: '',
+        password: '',
+        email: ''
+    }
+
+    $scope._isLogged = false
+    $scope.current_user = {}
+    $scope.jwt_token = ''
+
+    $scope.isLogged = function() {
+        // Check if user in local storage ecc...
+        // return $scope._isLogged
+
+        if(UserService.isLogged()) {
+            let userData = UserService.getUserAndToken()
+
+            $scope.current_user = userData.user
+            $scope.jwt_token = userData.token
+
+            $scope._isLogged = true
+
+            console.log('userData isLogged(): ', userData)
+
+            ForumApiService.setJWTToken(userData.token)
+
+            return true
+        }
+
+        return false
     }
 
     forum.addNewTopic = function(topic) {
@@ -202,6 +312,7 @@ var forumController = app.controller(
         topic.maxTm = topic.timestamp
         topic.level = 1
         topic.parent = 0
+        topic.user = $scope.current_user.id
 
         console.log('New Topic is: ', topic)
 
@@ -212,9 +323,127 @@ var forumController = app.controller(
                 $scope.onload()
             })
     }
+
+    forum.login = function(user) {
+        console.log('Asking login for user: ', user)
+
+        ForumApiService.login(user)
+            .then(response => {
+                console.log('Login Response: ', response)
+
+                if(response.data.success == true) {
+                    console.log('Login Success !!!')
+
+                    alert('Login Success !!!')
+
+                    // $scope.loginSuccessMsg = 'Login Success !!!'
+
+                    // $window.localstorage
+
+                    UserService.saveNewUser(response.data.data.user, response.data.data.token)
+
+                    $scope.closeModal('login-modal')
+
+                    ForumApiService.setJWTToken(response.data.data.token)
+
+                    /*$scope.current_user = response.data.data.user
+                    $scope.jwt_token = response.data.data.token
+
+                    $scope._isLogged = true*/
+                } else {
+                    console.log('Login Failed: ' + response.data.data.msg)
+
+                    $scope.loginErrorMsg = response.data.data.msg
+                }
+            })
+    }
+
+    forum.registerNewUser = function(newUser) {
+        ForumApiService.registerNewUser(newUser)
+            .then(res => {
+                console.log('Register New User Response: ', res)
+
+                if(res.data.success === true) {
+                    console.log('Register Success')
+
+                    $scope.registerErrorMsg = undefined
+                    $scope.registerSuccessMsg = 'Utente Creato, prego fare il login'
+                } else {
+                    console.log('Register Failed')
+
+                    if (res.data.data.msg.errmsg.includes('duplicate key')) {
+                        $scope.registerSuccessMsg = undefined
+                        $scope.registerErrorMsg = 'Registrazione Fallita: Email o Utente già in uso'
+                    } else {
+                        $scope.registerSuccessMsg = undefined
+                        $scope.registerErrorMsg = 'Registrazione Fallita: ' + res.data.data.msg.errmsg
+                    }
+                }
+            })
+            .catch(err => console.log('Register New User Error: ', err))
+    }
+
+    forum.editUser = function(newUser) {
+        console.log('Editing user', $scope.current_user)
+
+        if(newUser.email == '') {
+            delete newUser['email']
+        }
+
+        if(newUser.password == '') {
+            delete newUser['password']
+        }
+
+        if(newUser.username == '') {
+            delete newUser['username']
+        }
+
+        if(newUser.login == '') {
+            delete newUser['login']
+        }
+
+        console.log('With: ', newUser)
+
+        ForumApiService.editUser($scope.current_user._id, newUser)
+            .then(res => {
+                console.log('Edit User Response: ', res)
+            })
+            .catch(err => console.log(err))
+    }
+
+    forum.doLogout = function() {
+        console.log('Asking login for user: ', $scope.current_user)
+
+        UserService.deleteUser()
+
+        $scope.current_user = {}
+        $scope.jwt_token = ''
+
+        $scope._isLogged = false
+    }
+
+    $scope.loadForum = function(ev, f) {
+        console.log('loadForum, ev: ', ev, f)
+
+        $scope.forumList = $scope.forumList.map(item => item.is_active = false)
+
+        // f.is_active = true;
+
+        /*if($(ev.target).hasClass('forum-tab-active')) {
+            return;
+        }
+
+        $(ev.target).addClass('forum-tab-active')*/
+    }
     
     // Do Onload Things...
     $scope.onload = function() {
+        ForumApiService.getForums()
+            .then(response => {
+                $scope.forumList = response.data
+                sortDescByOrder($scope.forumList)
+            })
+        
         ForumApiService.getTopics()
             .then(response => {
                 $scope.topics = response.data
