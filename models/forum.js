@@ -32,7 +32,8 @@ const forumSchema = new mongoose.Schema({
     is_active: {
         type: Boolean,
         unique: false,
-        required: true
+        required: true,
+        default: false
     }
 }, {timestamps: true});
 

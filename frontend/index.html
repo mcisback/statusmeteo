@@ -72,6 +72,12 @@
             cursor: pointer;
         }
 
+        .topic-buttons {
+            border: 1px solid #396;
+            background-color: #efefef;
+            color: #0000a0;
+        }
+
         #mainWrapper {
             margin: 0;
             padding: 0;
@@ -147,6 +153,20 @@
             font-size: 30px !important;
         }
 
+        .topic-title {
+            font-size: small;
+            color: #000000;
+            font-family: Verdana;
+            font-weight: bold;
+        }
+
+        .topic-subtitle {
+            font-size: 10px;
+            color: #6b6b6b;
+            font-weight: 400;
+            font-family: Verdana;
+        }
+
     </style>
 </head>
 <body ng-app="forumApp">
@@ -179,7 +199,8 @@
                             Benvenuto {{current_user.username}}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="#" ng-click="openModal('edit-user-modal')">Modifica Profilo</a>
+                            <a class="dropdown-item" href="#" ng-click="openModal('edit-user-modal')">Modifica Profilo</a>
+                            <a class="dropdown-item" href="#" ng-click="goToAdminArea()" ng-if="isAdmin()">Admin Area</a>
                             <a class="dropdown-item" href="#" ng-click="forum.doLogout()">Logout</a>
                         </div>
                     </li>
@@ -194,8 +215,8 @@
 
         <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px;">
             <div class="container">
-                <h1 class="display-4">Welcome to STATUS METEO!</h1>
-                <p class="lead">
+                <h1 class="display-4" style="font-size: 2em; font-family: Verdana; font-weight: bold;">Welcome to STATUS METEO!</h1>
+                <p class="lead" style="font-size: x-small; font-family: Verdana; text-align: center;">
                     In questo forum ognuno può esprimere liberamente la propria opinione nei limiti stabiliti dal regolamento. La qualità del forum dipende da quella dei vostri interventi. Fatene buon uso!
                     Descrizione sito amatoriale durante l utilizzo, consigli di acquisto e racconto delle proprie esperienze. Come per l area Discussioni, i thread verranno riportati in evidenza dagli aggiornamenti
                 </p>
@@ -211,50 +232,87 @@
                     <a class="nav-link" href="#">Longer nav link</a>
                     <a class="nav-link" href="#">Link</a>
                     <a class="nav-link disabled" href="#">Disabled</a>-->
-                    <li class="nav-item" ng-repeat="f in forumList" style="border: 0; cursor: pointer;">
-                        <a class="nav-link forum-tab-active" ng-if="f.is_active" style="color: {{f.color}}">{{f.title}}</a>
-                        <a class="nav-link forum-tab" ng-click="loadForum($event, f)" ng-if="!f.is_active" style="color: {{f.color}}">{{f.title}}</a>
+                    <li class="nav-item" ng-repeat="f in forumList track by $index" style="border: 0; cursor: pointer;">
+                        <a class="nav-link forum-tab-active" ng-if="f.is_active" style="color: {{f.color}}; border-bottom: thick solid {{f.color}};">{{f.title}}</a>
+                        <a class="nav-link forum-tab" ng-click="loadForum($event, $index, f)" ng-if="!f.is_active" style="color: {{f.color}}">{{f.title}}</a>
                     </li>
                 </nav>
             </div>
             <hr>
-            <script type="text/ng-template" id="topicTemplate">
-                <div class="container-fluid topic">
-                    <div class="container-fluid topic-head" ng-click="showTopicText(this)">
-                        <h2>{{topic.title}} : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}}</h2>
-                        <p>{{topic.subtitle}}</p>
-                    </div>
-                    <div class="container-fluid topic-content">
-                        <p class="hide">{{topic.text}}</p>
+            <script type="text/ng-template" id="topicButtonsTemplate">
+                <p style="font-family: Verdana; font-size: small; color: black;" ng-bind-html="topic.text | safeHtml"></p>
+
+                <hr>
+
+                <div style="display: flex; flex-flow: row; justify-content: flex-end;">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Thread Buttons">
+                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('new-topic-editor-modal')">New</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('add-topic-editor-modal')">Add</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('reply-topic-editor-modal')">Reply</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('edit-topic-editor-modal')">Change</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('delete-topic-editor-modal')">Delete</button>
                     </div>
                 </div>
+            </script>
+            <script type="text/ng-template" id="topicTemplate">
+                <div class="container-fluid topic px-0" ng-click="showTopicText($event, topic)">
+                    <div style="display: flex; flex-flow: row; justify-content: flex-start;">
+                        <div class="container-fluid topic-head" style="flex-flow: column; width: 60%; padding: 0; margin: 0; padding-left: 1rem;">
+                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
+                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
+                            <span class="topic-title">{{topic.title}}<!-- : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}} --></span>
+                            <br>
+                            <span class="topic-subtitle">{{topic.subtitle}}</span>
+                        </div>
+
+                        <div class="px-0" style="display: table; width: 10%;">
+                            {{topic.topics.length}}
+                        </div>
+
+                        <div class="px-0" style="display: table; width: 10%;">
+                            {{topic.user}}
+                        </div>
+
+                        <div class="px-0" style="display: table; width: 10%;">
+                            {{topic.createdAt}}
+                        </div>
+
+                        <div class="px-0" style="display: table; width: 10%;">
+                            {{topic.updatedAt}}
+                        </div>
+
+                    </div>
+
+                    <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
+                </div>
                 <div class="container-fluid" ng-if="topic.topics">
-                    <div class="container-fluid topic" ng-repeat="topic in topic.topics" ng-include="'topicTemplate'" style="margin-left: 3rem;">
-                        <div class="container-fluid topic-head" ng-click="showTopicText($event, this)">
-                            <h3>{{topic.title}} : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}}</h3>
-                            <p>{{topic.subtitle}}</p>
+                    <div class="container-fluid topic px-0" ng-repeat="topic in topic.topics" ng-include="'topicTemplate'" style="margin-left: 1rem;">
+                        <div class="container-fluid topic-head" ng-click="showTopicText($event, topic)">
+                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
+                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
+                            <span class="topic-title">{{topic.title}}<!-- : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}} --></span>
+                            <br>
+                            <span class="topic-subtitle">{{topic.subtitle}}</span>
                         </div>
-                        <div class="container-fluid topic-content">
-                            <p class="hide">{{topic.text}}</p>
-                        </div>
+                        <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
                     </div>
                 </div>
             </script>
 
             <script type="text/ng-template" id="forumHeadTemplate">
                 <!-- <span style="justify-self: flex-start;">Threads</span>
-                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('add-topic-editor-modal')">Nuovo</button>-->
+                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('new-topic-editor-modal')">Nuovo</button>-->
                 <!-- <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="sortAll(topics)">Sort</button> -->
                 <table border="0" cellpadding="1" cellspacing="1" height="20" class="forum-head" style="min-width:540px; background-color:#215a94; border-color:#EFEFEF;" valign="absmiddle" width="100%">
                     <tbody>
                         <tr>
                             <td>
                                 <a href="#">
-                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('add-topic-editor-modal')">
+                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('new-topic-editor-modal')">
                                 </a>
                             </td>
                             <td>
-                                <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image">
+                                <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image" ng-click="loadTopics()">
                             </td>
                             <td class="Fix" nowrap="nowrap"><b>&nbsp;Search&nbsp;</b></td>
                             <td><input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text"></td>
@@ -263,9 +321,9 @@
                                 <div class="mat-button-focus-overlay"></div></button></mat-datepicker-toggle><mat-datepicker></mat-datepicker></td>
                             <td width="99%">&nbsp;</td>
                             <td class="Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></td>
-                            <td><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text"></td>
-                            <td align="left"><img src="assets/Blu_Prev.gif" title="Pagina precedente" type="image"></td>
-                            <td align="right"><img src="assets/Blu_Next.gif" title="Pagina successiva" type="image"></td>
+                            <td><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text" ng-model="current_page"></td>
+                            <td align="left"><img src="assets/Blu_Prev.gif" title="Pagina precedente" type="image" ng-click="forum.goToPreviousPage()"></td>
+                            <td align="right"><img src="assets/Blu_Next.gif" title="Pagina successiva" type="image" ng-click="forum.goToNextPage()"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -291,14 +349,14 @@
             </table>
 
             <div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
-                <div class="container-fluid topic" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
+                <div class="container-fluid topic px-0" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
             </div>
 
             <!-- Forum Header Bottom -->
             <div class="container-fluid pl-0 pr-0" ng-include="'forumHeadTemplate'"></div>
         </div>
 
-        <modal id="add-topic-editor-modal">
+        <modal id="new-topic-editor-modal">
             <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
                     <h1>Add New Topic</h1>
@@ -319,7 +377,7 @@
                     <br>
 
                     <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Save</button>
-                    <button ng-click="closeModal('add-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeModal('new-topic-editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal" ng-if="!isLogged()">
@@ -329,7 +387,7 @@
 
                     <br>
 
-                    <button ng-click="closeModal('add-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeModal('new-topic-editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -338,7 +396,7 @@
         <modal id="reply-topic-editor-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>Reply</h1>
+                    <h1>Reply to: {{current_topic.title}}</h1>
                     <p>
                         Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
@@ -351,7 +409,7 @@
 
                     <input type="hidden" name="id" ng-model="forum.topic.id">
 
-                    <button ng-click="forum.replyTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="forum.replyToTopic(current_topic, forum.topic);" class="btn btn-primary">Reply</button>
                     <button ng-click="closeModal('reply-topic-editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>
@@ -361,20 +419,20 @@
         <modal id="edit-topic-editor-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>Edit Topic</h1>
+                    <h1>Edit Topic: {{current_topic.title}}</h1>
                     <p>
-                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
+                        Topic: <input type="text" name="topic" ng-model="current_topic.title" class="form-control" />
                         <br>
-                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
+                        Subject: <input type="text" name="subject" ng-model="current_topic.subtitle" class="form-control" />
                     </p>
 
-                    <textarea ng-model="forum.topic.text" id="ckeditor-edit" ckeditor></textarea>
+                    <textarea ng-model="current_topic.text" id="ckeditor-edit" ckeditor>{{current_topic.text}}</textarea>
 
                     <br>
 
-                    <input type="hidden" name="id" ng-model="forum.topic.id">
+                    <input type="hidden" name="id" ng-model="current_topic.id">
 
-                    <button ng-click="forum.editTopic(forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="forum.editTopic(current_topic);" class="btn btn-primary">Edit</button>
                     <button ng-click="closeModal('edit-topic-editor-modal');" class="btn btn-primary">Close</button>
                 </div>
             </div>

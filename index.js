@@ -57,9 +57,11 @@ const checkToken = (req, res, next) => {
 
                 return res.sendStatus(403).json({
                     success: false,
-                    message: 'Token is not valid'
+                    msg: 'Token is not valid'
                 })
             } else {
+                console.log('JWT decoded is: ', decoded)
+
                 req.decoded = decoded
                 next()
             }
@@ -69,7 +71,22 @@ const checkToken = (req, res, next) => {
         
         return res.sendStatus(403).json({
             success: false,
-            message: 'Auth token is not supplied'
+            msg: 'Auth token is not supplied'
+        })
+    }
+}
+
+const checkIfUserIsAdmin = (req, res, next) => {
+    console.log('checkIfUserIsAdmin: ', req.decoded)
+
+    if(req.decoded.user.is_admin === true) {
+        req.is_admin = true
+
+        next()
+    } else {
+        return res.sendStatus(403).json({
+            success: false,
+            msg: 'You are not admin'
         })
     }
 }
@@ -96,8 +113,18 @@ app.get(api_endpoint + '/topics', function (req, res) {
         console.log('GET topics: ', err, data, data.length)
 
         res.json(data)
+    }).populate('Topic.user')
+})
+
+// Get all topics by forum id
+app.get(api_endpoint + '/topics/:forumId', function (req, res) {
+    models.Topic.find({forum: req.params.forumId}, function(err, data) {
+        console.log('GET topics: ', err, data, req.params.forumId, data.length)
+
+        res.json(data)
     })
 })
+
 
 // Create New Topic
 app.post(api_endpoint + '/topic', checkToken, function (req, res) {
@@ -117,7 +144,7 @@ app.delete(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
 
     models.Topic.findById(req.params.topicId, function (err, doc) {
         if (err) {
-            let r = {success:  "error", msg: err}
+            let r = {success:  false, msg: err}
 
             console.log('Topic DELETE Error: ', r)
 
@@ -129,13 +156,61 @@ app.delete(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
 })
 
 // Modify Topic
+// TODO Check Topic Owner
 app.put(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
-    res.json({"msg": "Not Yet Implemented"})
+
+    console.log('Modifying TOPIC ID: ', req.params.topicId)
+    // console.log('req, res: ', req, res)
+
+    models.Topic.findOneAndUpdate({_id: req.params.topicId}, req.body, {new: true}, (err, doc) => {
+        if (err) {
+            let r = {success:  false, data:{msg: err}}
+
+            console.log('Topic UPDATE Error: ', r)
+
+            res.json(r)
+        } else {
+            console.log('UPDATE Topic Success')
+
+            res.json({success: true, data:{msg: doc}})
+        }
+    })
+    // res.json({"msg": "Not Yet Implemented"})
+})
+
+// Reply To Topic
+app.post(api_endpoint + '/topic/reply/:topicId', checkToken, function (req, res) {
+
+    console.log('Replying to TOPIC ID: ', req.params.topicId)
+    console.log('req, res: ', req, res)
+    console.log('req.topics: ', req.body.topics)
+
+    models.Topic.findOne({_id: req.params.topicId})
+        .exec((err, topic) => {
+            if(err) {
+                console.log('Replying Failed', err)
+
+                res.json({success:  false, data:{msg: err}})
+            } else {
+                topic.topics.push(req.body)
+
+                topic.save((err, doc) => {
+                    if(err){
+                        console.log('Replying Failed', err)
+
+                        res.json({success:  false, data:{msg: err}})
+                    } else {
+                        console.log('Replying Success', topic)
+
+                        res.json({success: true, data:{msg: topic}})
+                    }
+                })
+            }
+        })
 })
 
 // Get all users (for admin)
-// TODO: Check if admin
-app.get(api_endpoint + '/users', checkToken, function (req, res) {
+app.get(api_endpoint + '/users', checkToken, checkIfUserIsAdmin, function (req, res) {
     models.User.find({}, function(err, data) {
         console.log(err, data, data.length)
 
@@ -215,7 +290,7 @@ app.post(api_endpoint + '/login', function (req, res) {
                 console.log('Found User: ', user)
 
                 if(bcrypt.compareSync(req.body.password, user.password)) {
-                    const token = jwt.sign({id: user._id}, config[env].secretKey, { expiresIn: '3h' });
+                    const token = jwt.sign({id: user._id, user: user}, config[env].secretKey, { expiresIn: '3h' });
                     
                     res.json({success: true, data: {msg: "user found!!!", user: user, token: token}});
                 } else {
@@ -259,28 +334,26 @@ const seedDb = async () => {
     const forum2 = new models.Forum({
         title: 'Discussioni',
         color: 'green',
-        order: 1,
-        is_active: false
+        order: 1
     })
 
     const forum3 = new models.Forum({
         title: 'Varie & Strumentazione',
         color: '#7e5530',
-        order: 2,
-        is_active: false
+        order: 2
     })
 
     const forum4 = new models.Forum({
         title: 'Funghi',
         color: 'red',
-        order: 3,
-        is_active: false
+        order: 3
     })
 
     const topic1 = new models.Topic({
-        parent: 0,
-        title:'AngularJS',
+        parent: '0',
+        title:'AngularJS Forum 1',
         subtitle: 'Learn Angular',
+        level: 1,
         text: "Lorem Ipsum dsadnoasdnoasdmoa 1",
         timestamp: new Date().getTime(),
         maxTm: new Date().getTime(),
@@ -291,8 +364,9 @@ const seedDb = async () => {
 
     topic1.topics.push({
         parent: topic1.id,
-        title:'AngularJS Basics',
+        title:'AngularJS Basics Forum 1',
         subtitle: 'Learn Angular Basics',
+        level: 2,
         text: "Lorem Ipsum dsadnoasdnoasdmoa 3",
         timestamp: new Date().getTime() + 100,
         maxTm: new Date().getTime() + 100,
@@ -302,9 +376,10 @@ const seedDb = async () => {
     })
 
     const topic2 = new models.Topic({
-        parent: 0,
-        title:'VueJS',
+        parent: '0',
+        title:'VueJS Forum 2',
         subtitle: 'Learn VueJS',
+        level: 1,
         text: "Lorem Ipsum dsadnoasdnoasdmoa 2",
         timestamp: new Date().getTime(),
         maxTm: new Date().getTime(),
@@ -314,9 +389,10 @@ const seedDb = async () => {
     })
 
     const topic3 = new models.Topic({
-        parent: 0,
-        title:'AngularJS',
+        parent: '0',
+        title:'AngularJS Forum 2',
         subtitle: 'Learn Angular',
+        level: 1,
         text: "Lorem Ipsum dsadnoasdnoasdmoa 1",
         timestamp: new Date().getTime(),
         maxTm: new Date().getTime(),
@@ -327,8 +403,9 @@ const seedDb = async () => {
 
     topic3.topics.push({
         parent: topic1.id,
-        title:'AngularJS Basics',
+        title:'AngularJS Basics Forum 2',
         subtitle: 'Learn Angular Basics',
+        level: 2,
         text: "Lorem Ipsum dsadnoasdnoasdmoa 3",
         timestamp: new Date().getTime() + 100,
         maxTm: new Date().getTime() + 100,
@@ -337,17 +414,45 @@ const seedDb = async () => {
         forum: forum2.id
     })
 
-    await forum1.save()
-    await forum2.save()
-    await forum3.save()
-    await forum4.save()
+    const topic4 = new models.Topic({
+        parent: '0',
+        title:'Strumentazione',
+        subtitle: 'Strumentazione varia',
+        level: 1,
+        text: "Lorem Ipsum dsadnoasdnoasdmoa 1",
+        timestamp: new Date().getTime(),
+        maxTm: new Date().getTime(),
+        topics: [],
+        user: normalUser.id,
+        forum: forum3.id
+    })
 
-    await topic1.save()
-    await topic2.save()
-    await topic3.save()
+    const topic5 = new models.Topic({
+        parent: '0',
+        title:'Funghi Porcini',
+        subtitle: 'Discussione sui funghi porcini',
+        level: 1,
+        text: "Lorem Ipsum dsadnoasdnoasdmoa 1",
+        timestamp: new Date().getTime(),
+        maxTm: new Date().getTime(),
+        topics: [],
+        user: normalUser.id,
+        forum: forum4.id
+    })
 
-    await superAdmin.save()
-    await normalUser.save()
+    await forum1.save().catch(err => console.log(err))
+    await forum2.save().catch(err => console.log(err))
+    await forum3.save().catch(err => console.log(err))
+    await forum4.save().catch(err => console.log(err))
+
+    await topic1.save().catch(err => console.log(err))
+    await topic2.save().catch(err => console.log(err))
+    await topic3.save().catch(err => console.log(err))
+    await topic4.save().catch(err => console.log(err))
+    await topic5.save().catch(err => console.log(err))
+
+    await superAdmin.save().catch(err => console.log(err))
+    await normalUser.save().catch(err => console.log(err))
 }
 
 var server = null;
@@ -355,14 +460,15 @@ const eraseDatabaseOnSync = true;
 
 connectDb().then(async () => {
     if (eraseDatabaseOnSync) {
+        console.log('[+] Erasing Database On Sync')
         await Promise.all([
           models.User.deleteMany({}),
           models.Forum.deleteMany({}),
           models.Topic.deleteMany({}),
         ]);
-
-        seedDb()
     }
+
+    seedDb()
 
     server = app.listen(config[env].port, () => {
         const host = server.address().address

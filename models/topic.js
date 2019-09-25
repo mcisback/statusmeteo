@@ -15,12 +15,17 @@ const mongoose = require('mongoose')
 
 const topicSchema = new mongoose.Schema({
     parent: {
-        type: Number,
+        type: String,
         unique: false,
         required: true
     },
     title: {
         type: String,
+        unique: false,
+        required: true
+    },
+    level: {
+        type: Number,
         unique: false,
         required: true
     },

@@ -56,8 +56,12 @@ app.service('ForumApiService', function($http) {
         $http.defaults.headers.common.Authorization = '';
     }
 
-    api.getTopics = function() {
-        return $http.get(api.endpoint + '/topics')
+    api.getTopics = function(forum_id=null) {
+        if(!forum_id) {
+            return $http.get(api.endpoint + '/topics')
+        } else {
+            return $http.get(api.endpoint + '/topics/' + forum_id)
+        }
     }
 
     api.getForums = function() {
@@ -68,6 +72,18 @@ app.service('ForumApiService', function($http) {
         $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/topic', JSON.stringify(topic))
+    }
+
+    api.editTopic = function(topic_id, topic) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+
+        return $http.put(api.endpoint + '/topic/' + topic_id, JSON.stringify(topic))
+    }
+
+    api.replyToTopic = function(parent_topic_id, topic) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+
+        return $http.post(api.endpoint + '/topic/reply/' + parent_topic_id, JSON.stringify(topic))
     }
 
     api.login = function(user) {
@@ -153,6 +169,10 @@ app.service('UserService', function() {
 
     service.isLogged = function() {
         return (window.localStorage['user'] || false) && (window.localStorage['token'] || false)
+    }
+
+    service.isAdmin = function() {
+        return this.isLogged() && this.getUserAndToken().user.is_admin
     }
 
     service.deleteUser = function() {
@@ -253,9 +273,15 @@ app.directive('modal', function(ModalService) {
     }
 })
 
+app.filter('safeHtml', function ($sce) {
+    return function (val) {
+        return $sce.trustAsHtml(val);
+    };
+});
+
 var forumController = app.controller(
     'ForumController',
-    ['$scope', 'UserService', 'ModalService', 'ForumApiService', function($scope, UserService, ModalService, ForumApiService) {
+    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', function($scope, $window, UserService, ModalService, ForumApiService) {
     var forum = this;
 
     console.log('$scope: ', $scope)
@@ -282,8 +308,11 @@ var forumController = app.controller(
     }
 
     $scope._isLogged = false
+    $scope._isAdmin = false
     $scope.current_user = {}
     $scope.jwt_token = ''
+    $scope.current_page = 0
+    $scope.current_topic = {};
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
@@ -297,7 +326,10 @@ var forumController = app.controller(
 
             $scope._isLogged = true
 
-            console.log('userData isLogged(): ', userData)
+            $scope._isAdmin = UserService.isAdmin()
+            // console.log('isAdmin: ', $scope._isAdmin)
+
+            // console.log('userData isLogged(): ', userData)
 
             ForumApiService.setJWTToken(userData.token)
 
@@ -307,12 +339,55 @@ var forumController = app.controller(
         return false
     }
 
+    forum.goToNextPage = function() {
+       return forum.incPage(1)
+    }
+
+    forum.goToPreviousPage = function() {
+        return forum.incPage(-1)
+    }
+
+    forum.incPage = function(inc) {
+        if($scope.current_page >= 0) {
+            $scope.current_page += inc
+        } else {
+            $scope.current_page = 0
+        }
+
+        console.log('current_page: ', $scope.current_page)
+    }
+
+    forum.replyToTopic = function(parentTopic, newTopic) {
+        newTopic.timestamp = Date.now()
+        newTopic.maxTm = newTopic.timestamp
+        newTopic.level = parentTopic.level || 0
+        newTopic.level++
+        newTopic.parent = '0'
+        newTopic.user = $scope.current_user._id
+        newTopic.forum = $scope.currentForum._id
+
+        // parentTopic.topics.push(newTopic)
+
+        // $scope.loadTopics()
+
+        // TODO Save to database
+
+        ForumApiService.replyToTopic(parentTopic._id, newTopic)
+            .then(res => {
+                console.log('replyToTopic res: ', res)
+
+                $scope.loadTopics()
+            })
+            .catch(err => console.log(err))
+    }
+ 
     forum.addNewTopic = function(topic) {
         topic.timestamp = Date.now()
         topic.maxTm = topic.timestamp
         topic.level = 1
-        topic.parent = 0
-        topic.user = $scope.current_user.id
+        topic.parent = '0'
+        topic.user = $scope.current_user._id
+        topic.forum = $scope.currentForum._id
 
         console.log('New Topic is: ', topic)
 
@@ -320,7 +395,7 @@ var forumController = app.controller(
             .then(response => {
                 $scope.apiResponse = response.data
 
-                $scope.onload()
+                $scope.loadTopics()
             })
     }
 
@@ -422,18 +497,34 @@ var forumController = app.controller(
         $scope._isLogged = false
     }
 
-    $scope.loadForum = function(ev, f) {
-        console.log('loadForum, ev: ', ev, f)
+    $scope.loadForum = function($event, $index, f) {
+        console.log('loadForum $index: ', $index)
+        console.log('loadForum, ev: ', $event, f)
 
-        $scope.forumList = $scope.forumList.map(item => item.is_active = false)
+        $scope.forumList.map(item => item.is_active = false)
 
-        // f.is_active = true;
+        f.is_active = true;
 
-        /*if($(ev.target).hasClass('forum-tab-active')) {
+        $scope.currentForum = f
+
+        console.log('New Current Forum is: ', $scope.currentForum)
+
+        $scope.loadTopics()
+
+        /*if($($event.target).hasClass('forum-tab-active')) {
             return;
         }
 
-        $(ev.target).addClass('forum-tab-active')*/
+        $($event.target).addClass('forum-tab-active')*/
+    }
+
+    $scope.loadTopics = function() {
+
+        ForumApiService.getTopics($scope.currentForum._id)
+            .then(response => {
+                $scope.topics = response.data
+                $scope.sortAll($scope.topics)
+            })
     }
     
     // Do Onload Things...
@@ -441,14 +532,21 @@ var forumController = app.controller(
         ForumApiService.getForums()
             .then(response => {
                 $scope.forumList = response.data
-                sortDescByOrder($scope.forumList)
+                // sortDescByOrder($scope.forumList)
+
+                $scope.currentForum = $scope.forumList[0]
+                console.log('Current Forum is: ', $scope.currentForum)
+
+                $scope.loadTopics()
             })
-        
-        ForumApiService.getTopics()
-            .then(response => {
-                $scope.topics = response.data
-                $scope.sortAll($scope.topics)
-            })
+    }
+
+    $scope.isAdmin = function() {
+        return $scope.current_user.is_admin
+    }
+
+    $scope.goToAdminArea = function() {
+        $window.location.href = '/admin'
     }
 
     // Sort Topics Per Relevance (Latest Active to less Active)
@@ -527,9 +625,29 @@ var forumController = app.controller(
         ModalService.Close(id);
     }
 
-    $scope.showTopicText = function($event, el) {
-        console.log('Clicked el: ', el)
+    $scope.showTopicText = function($event, topic) {
+        console.log('Clicked topic: ', topic)
         console.log('Clicked $event: ', $event)
+
+        if(topic.hasOwnProperty('showText')) {
+            topic.showText = !topic.showText;
+        } else {
+            topic.showText = true;
+        }
+
+        $scope.current_topic = topic
+        console.log('$scope.current_topic: ', $scope.current_topic)
     }
 
 }]);
+
+/*var adminAreaController = app.controller(
+    'ForumController',
+    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', function($scope, $window, UserService, ModalService, ForumApiService) {
+    var adminArea = this;
+
+    // Do Onload Things...
+    $scope.onload = function() {
+    }
+
+}]);*/
