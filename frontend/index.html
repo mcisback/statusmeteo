@@ -8,6 +8,8 @@
     
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
+    <link href="/scripts/angularjs-datepicker/dist/angular-datepicker.min.css" rel="stylesheet">
+
     <style>
         .hide {
             display: none;
@@ -240,7 +242,7 @@
             </div>
             <hr>
             <script type="text/ng-template" id="topicButtonsTemplate">
-                <p style="font-family: Verdana; font-size: small; color: black;" ng-bind-html="topic.text | safeHtml"></p>
+                <p style="font-family: Verdana; font-size: small; color: black; margin-left: {{topic.level*2}}rem" ng-bind-html="topic.text | safeHtml"></p>
 
                 <hr>
 
@@ -254,7 +256,7 @@
                     </div>
                 </div>
             </script>
-            <script type="text/ng-template" id="topicTemplate">
+            <script type="text/ng-template" id="topicTemplateDiv">
                 <div class="container-fluid topic px-0" ng-click="showTopicText($event, topic)">
                     <div style="display: flex; flex-flow: row; justify-content: flex-start;">
                         <div class="container-fluid topic-head" style="flex-flow: column; width: 60%; padding: 0; margin: 0; padding-left: 1rem;">
@@ -265,19 +267,19 @@
                             <span class="topic-subtitle">{{topic.subtitle}}</span>
                         </div>
 
-                        <div class="px-0" style="display: table; width: 10%;">
+                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
                             {{topic.topics.length}}
                         </div>
 
-                        <div class="px-0" style="display: table; width: 10%;">
-                            {{topic.user}}
+                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
+                            USER
                         </div>
 
-                        <div class="px-0" style="display: table; width: 10%;">
+                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
                             {{topic.createdAt}}
                         </div>
 
-                        <div class="px-0" style="display: table; width: 10%;">
+                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
                             {{topic.updatedAt}}
                         </div>
 
@@ -286,7 +288,7 @@
                     <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
                 </div>
                 <div class="container-fluid" ng-if="topic.topics">
-                    <div class="container-fluid topic px-0" ng-repeat="topic in topic.topics" ng-include="'topicTemplate'" style="margin-left: 1rem;">
+                    <div class="container-fluid topic px-0" ng-repeat="topic in topic.topics" ng-include="'topicTemplateDiv'" style="margin-left: 1rem;">
                         <div class="container-fluid topic-head" ng-click="showTopicText($event, topic)">
                             <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
                             <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
@@ -297,6 +299,28 @@
                         <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
                     </div>
                 </div>
+            </script>
+
+            <script type="text/ng-template" id="topicTemplateTable">
+                <tr>
+                    <td style="width:5%;">&nbsp;</td>
+                    <td style="width: 60%; cursor: pointer;" ng-click="showTopicText($event, topic)">
+                        <div style="width: 100%; margin-left: {{topic.level}}rem">
+                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
+                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
+                            <span class="topic-title">{{topic.title}}</span>
+                            <br>
+                            <span class="topic-subtitle">{{topic.subtitle}}</span>
+                        </div>
+                    </td>
+                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.topics.length}}</td>
+                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">AUTORE</td>
+                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.updatedAt}}</td>
+                    <td style="width:5%;">&nbsp;</td>
+                </tr>
+                <tr ng-if="topic.showText">
+                    <div class="container-fluid" ng-include="'topicButtonsTemplate'"></div>
+                </tr>
             </script>
 
             <script type="text/ng-template" id="forumHeadTemplate">
@@ -317,8 +341,24 @@
                             <td class="Fix" nowrap="nowrap"><b>&nbsp;Search&nbsp;</b></td>
                             <td><input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text"></td>
                             <td class="Fix" nowrap="nowrap"><b>&nbsp;Data&nbsp;</b></td>
-                            <td class="Fix" nowrap="nowrap"><input maxlength="10" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true"><mat-datepicker-toggle class="mat-datepicker-toggle" matsuffix=""><button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0"><span class="mat-button-wrapper"><!----><svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0z" fill="none"></path><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path></svg></span><div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
-                                <div class="mat-button-focus-overlay"></div></button></mat-datepicker-toggle><mat-datepicker></mat-datepicker></td>
+                            <td class="Fix" nowrap="nowrap">
+                                <datepicker date-format="dd-MM-yyyy">
+                                <input maxlength="10" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true" ng-model="date" class="angular-datepicker-input">
+                                <span class="mat-datepicker-toggle" matsuffix="">
+                                    <button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0" style="background-color: transparent; border: 0;">
+                                        <span class="mat-button-wrapper">
+                                            <!---->
+                                            <svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px">
+                                                <path d="M0 0h24v24H0z" fill="none"></path>
+                                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path>
+                                            </svg>
+                                        </span>
+                                        <div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
+                                        <div class="mat-button-focus-overlay"></div>
+                                    </button>
+                                </span>
+                                </datepicker>
+                            </td>
                             <td width="99%">&nbsp;</td>
                             <td class="Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></td>
                             <td><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text" ng-model="current_page"></td>
@@ -343,14 +383,51 @@
                         <td style="width:5%;">&nbsp;</td>
                     </tr>
                 </thead>
-                <tbody>
-                    
+                <tbody ng-repeat="topic in topics" >
+
+            <!--<div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
+                <div class="container-fluid topic px-0" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
+            </div>-->
+                    <tr style="display: flex; flex-flow: row; justify-content: center; background-color: white;">
+                        <td style="width:5%;">&nbsp;</td>
+                        <td style="width: 60%; cursor: pointer;" ng-click="showTopicText($event, topic)">
+                            <div style="width: 100%; margin-left: {{topic.level}}rem">
+                                <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
+                                <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
+                                <span class="topic-title">{{topic.title}}</span>
+                                <br>
+                                <span class="topic-subtitle">{{topic.subtitle}}</span>
+                            </div>
+                        </td>
+                        <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.topics.length}}</td>
+                        <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.username}}</td>
+                        <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.updatedAt}}</td>
+                        <td style="width:5%;">&nbsp;</td>
+                    </tr>
+
+                    <tr ng-if="topic.showText" style="display: flex; flex-flow: row; justify-content: center; background-color: white;" >
+                        <td style="width:5%;">&nbsp;</td>
+                        <td style="width: 95%;" colspan="5">
+                            <div>
+                                <p style="font-family: Verdana; font-size: small; color: black; margin-left: {{topic.level*2}}rem" ng-bind-html="topic.text | safeHtml"></p>
+
+                                <hr>
+                
+                                <div style="display: flex; flex-flow: row; justify-content: flex-end;">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Thread Buttons">
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('new-topic-editor-modal')">New</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('add-topic-editor-modal')">Add</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('reply-topic-editor-modal')">Reply</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('edit-topic-editor-modal')">Change</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.deleteTopic(topic)">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
                 </tbody>
             </table>
-
-            <div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
-                <div class="container-fluid topic px-0" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
-            </div>
 
             <!-- Forum Header Bottom -->
             <div class="container-fluid pl-0 pr-0" ng-include="'forumHeadTemplate'"></div>
@@ -406,8 +483,6 @@
                     <textarea ng-model="forum.topic.text" id="ckeditor-reply" ckeditor></textarea>
 
                     <br>
-
-                    <input type="hidden" name="id" ng-model="forum.topic.id">
 
                     <button ng-click="forum.replyToTopic(current_topic, forum.topic);" class="btn btn-primary">Reply</button>
                     <button ng-click="closeModal('reply-topic-editor-modal');" class="btn btn-primary">Close</button>
@@ -535,6 +610,8 @@
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.12/angular-material.min.js"></script> -->
 
     <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
+
+    <script src="/scripts/angularjs-datepicker/dist/angular-datepicker.min.js"></script>
 
     <script src="app.js"></script>
 

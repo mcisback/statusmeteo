@@ -14,11 +14,7 @@
 const mongoose = require('mongoose')
 
 const topicSchema = new mongoose.Schema({
-    parent: {
-        type: String,
-        unique: false,
-        required: true
-    },
+    parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
     title: {
         type: String,
         unique: false,
@@ -49,13 +45,24 @@ const topicSchema = new mongoose.Schema({
         unique: false,
         required: true
     },
-    topics: {
-        type: Array,
-        unique: false
+    username: {
+        type: String,
+        unique: false,
+        required: true
     },
+    topics: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' } ],
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     forum: { type: mongoose.Schema.Types.ObjectId, ref: 'Forum' }
 }, {timestamps: true});
+
+const autoPopulateChildren = function(next) {
+    this.populate('topics')
+    next()
+}
+
+topicSchema
+.pre('findOne', autoPopulateChildren)
+.pre('find', autoPopulateChildren)
 
 const Topic = mongoose.model('Topic', topicSchema);
 

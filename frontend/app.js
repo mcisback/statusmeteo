@@ -39,7 +39,9 @@ const sortDescByMaxTm = (a, b) => {
     return 0;
 }
 
-var app = angular.module('forumApp', [])
+var app = angular.module('forumApp', [
+    '720kb.datepicker'
+])
 
 app.service('ForumApiService', function($http) {
     api = {}
@@ -56,12 +58,16 @@ app.service('ForumApiService', function($http) {
         $http.defaults.headers.common.Authorization = '';
     }
 
-    api.getTopics = function(forum_id=null) {
-        if(!forum_id) {
-            return $http.get(api.endpoint + '/topics')
-        } else {
-            return $http.get(api.endpoint + '/topics/' + forum_id)
-        }
+    api.getTopics = function() {
+        return $http.get(api.endpoint + '/topics')
+    }
+
+    api.getTopicsByForum = function(forum_id) {
+        return $http.get(api.endpoint + '/topics/byforum/' + forum_id)
+    }
+
+    api.getTopicsByParent = function(parent_id) {
+        return $http.get(api.endpoint + '/topics/byparent/' + parent_id)
     }
 
     api.getForums = function() {
@@ -84,6 +90,12 @@ app.service('ForumApiService', function($http) {
         $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
 
         return $http.post(api.endpoint + '/topic/reply/' + parent_topic_id, JSON.stringify(topic))
+    }
+
+    api.deleteTopic = function(topic_id) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+
+        return $http.delete(api.endpoint + '/topic/' + topic_id)
     }
 
     api.login = function(user) {
@@ -297,7 +309,9 @@ var forumController = app.controller(
         timestamp: 0,
         maxTm: 0,
         topics: [],
-        user: ''
+        user: {},
+        username: '',
+        forum: null
     }
 
     forum.newUser = {
@@ -312,7 +326,8 @@ var forumController = app.controller(
     $scope.current_user = {}
     $scope.jwt_token = ''
     $scope.current_page = 0
-    $scope.current_topic = {};
+    $scope.current_topic = {}
+    $scope.current_modal = ''
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
@@ -362,8 +377,9 @@ var forumController = app.controller(
         newTopic.maxTm = newTopic.timestamp
         newTopic.level = parentTopic.level || 0
         newTopic.level++
-        newTopic.parent = '0'
+        newTopic.parent = parentTopic._id
         newTopic.user = $scope.current_user._id
+        newTopic.username = $scope.current_user.username
         newTopic.forum = $scope.currentForum._id
 
         // parentTopic.topics.push(newTopic)
@@ -385,8 +401,9 @@ var forumController = app.controller(
         topic.timestamp = Date.now()
         topic.maxTm = topic.timestamp
         topic.level = 1
-        topic.parent = '0'
+        topic.parent = null
         topic.user = $scope.current_user._id
+        topic.username = $scope.current_user.username
         topic.forum = $scope.currentForum._id
 
         console.log('New Topic is: ', topic)
@@ -397,6 +414,25 @@ var forumController = app.controller(
 
                 $scope.loadTopics()
             })
+    }
+
+    forum.deleteTopic = function(topic) {
+        var r = confirm("Sei cancelli il topic, non sarà più disponibile, sei sicuro ?");
+
+        if (r == true) {
+            ForumApiService.deleteTopic(topic._id)
+            .then(response => {
+                if(response.data.data.success == true) {
+                    alert('Topic rimosso correttamente')
+                } else {
+                    alert('Qualcosa è andato storto')
+                }
+
+                console.log('deleteTopic response: ', response)
+
+                $scope.loadTopics()
+            })
+        }
     }
 
     forum.login = function(user) {
@@ -518,12 +554,42 @@ var forumController = app.controller(
         $($event.target).addClass('forum-tab-active')*/
     }
 
+    $scope.flat = function(array) {
+        var result = [];
+        array.forEach(function (a) {
+            result.push(a);
+            if (Array.isArray(a.topics)) {
+                result = result.concat($scope.flat(a.topics));
+            }
+        });
+        return result;
+    }
+
+    $scope.rebuildTopics = function(_topics) {
+        for(let i = 0; i < _topics.length; i++) {
+            ForumApiService.getTopicsByParent(_topics[i]._id)
+                .then(data => data.data)
+                .then(children => {
+                    console.log(`Parent ${_topics[i]._id} children: `, children)
+                    _topics[i].topics = children
+                })
+        }
+
+        return _topics
+    }
+
     $scope.loadTopics = function() {
 
-        ForumApiService.getTopics($scope.currentForum._id)
+        ForumApiService.getTopicsByForum($scope.currentForum._id)
             .then(response => {
                 $scope.topics = response.data
+                // $scope.topics = $scope.rebuildTopics(response.data)
+
+                console.log('$scope.topics: ', $scope.topics)
+
                 $scope.sortAll($scope.topics)
+
+                $scope.topics = $scope.flat($scope.topics)
             })
     }
     
@@ -618,11 +684,15 @@ var forumController = app.controller(
     }
 
     $scope.openModal = function(id){
-        ModalService.Open(id);
+        $scope.current_modal = id
+
+        ModalService.Open(id)
     }
 
     $scope.closeModal = function(id){
-        ModalService.Close(id);
+        $scope.current_modal = ''
+
+        ModalService.Close(id)
     }
 
     $scope.showTopicText = function($event, topic) {
