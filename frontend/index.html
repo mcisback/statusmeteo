@@ -7,6 +7,7 @@
     <title>Status Meteo</title>
     
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="/ng/modal.css">
 
     <link href="/scripts/angularjs-datepicker/dist/angular-datepicker.min.css" rel="stylesheet">
 
@@ -17,50 +18,7 @@
         .show {
             display: block;
         }
-        /* MODAL STYLES
-        -------------------------------*/
-        modal {
-        /* modals are hidden by default */
-            display: none;
-        }
-        modal .modal {
-            /* modal container fixed across whole screen */
-            
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* z-index must be higher than .modal-background */
-            
-            z-index: 1000;
-            /* enables scrolling for tall modals */
-            
-            overflow: auto;
-        }
-        modal .modal .modal-body {
-            padding: 20px;
-            background: #fff;
-            /* margin exposes part of the modal background */
-
-            margin: 40px;
-        }
-        modal .modal-background {
-        /* modal background fixed across whole screen */
-
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* semi-transparent black  */
-
-            background-color: #000;
-            opacity: 0.75;
-            /* z-index must be below .modal and above everything else  */
-
-            z-index: 900;
-        }
+        
         body.modal-open {
         /* body overflow is hidden to hide main scrollbar when modal window is open */
             overflow: hidden;
@@ -241,87 +199,6 @@
                 </nav>
             </div>
             <hr>
-            <script type="text/ng-template" id="topicButtonsTemplate">
-                <p style="font-family: Verdana; font-size: small; color: black; margin-left: {{topic.level*2}}rem" ng-bind-html="topic.text | safeHtml"></p>
-
-                <hr>
-
-                <div style="display: flex; flex-flow: row; justify-content: flex-end;">
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Thread Buttons">
-                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('new-topic-editor-modal')">New</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('add-topic-editor-modal')">Add</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('reply-topic-editor-modal')">Reply</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('edit-topic-editor-modal')">Change</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('delete-topic-editor-modal')">Delete</button>
-                    </div>
-                </div>
-            </script>
-            <script type="text/ng-template" id="topicTemplateDiv">
-                <div class="container-fluid topic px-0" ng-click="showTopicText($event, topic)">
-                    <div style="display: flex; flex-flow: row; justify-content: flex-start;">
-                        <div class="container-fluid topic-head" style="flex-flow: column; width: 60%; padding: 0; margin: 0; padding-left: 1rem;">
-                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
-                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
-                            <span class="topic-title">{{topic.title}}<!-- : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}} --></span>
-                            <br>
-                            <span class="topic-subtitle">{{topic.subtitle}}</span>
-                        </div>
-
-                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
-                            {{topic.topics.length}}
-                        </div>
-
-                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
-                            USER
-                        </div>
-
-                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
-                            {{topic.createdAt}}
-                        </div>
-
-                        <div class="px-0" style="overflow-wrap: break-work; width: 10%;">
-                            {{topic.updatedAt}}
-                        </div>
-
-                    </div>
-
-                    <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
-                </div>
-                <div class="container-fluid" ng-if="topic.topics">
-                    <div class="container-fluid topic px-0" ng-repeat="topic in topic.topics" ng-include="'topicTemplateDiv'" style="margin-left: 1rem;">
-                        <div class="container-fluid topic-head" ng-click="showTopicText($event, topic)">
-                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
-                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
-                            <span class="topic-title">{{topic.title}}<!-- : TM={{topic.timestamp}}, MAXTM={{topic.maxTm}} --></span>
-                            <br>
-                            <span class="topic-subtitle">{{topic.subtitle}}</span>
-                        </div>
-                        <div class="container-fluid" ng-if="topic.showText" ng-include="'topicButtonsTemplate'"></div>
-                    </div>
-                </div>
-            </script>
-
-            <script type="text/ng-template" id="topicTemplateTable">
-                <tr>
-                    <td style="width:5%;">&nbsp;</td>
-                    <td style="width: 60%; cursor: pointer;" ng-click="showTopicText($event, topic)">
-                        <div style="width: 100%; margin-left: {{topic.level}}rem">
-                            <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
-                            <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
-                            <span class="topic-title">{{topic.title}}</span>
-                            <br>
-                            <span class="topic-subtitle">{{topic.subtitle}}</span>
-                        </div>
-                    </td>
-                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.topics.length}}</td>
-                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">AUTORE</td>
-                    <td style="width:10%; text-align: center; font-size: 13px; font-weight: 700; color: rgba(0,0,0,.54); font-family: Verdana;">{{topic.updatedAt}}</td>
-                    <td style="width:5%;">&nbsp;</td>
-                </tr>
-                <tr ng-if="topic.showText">
-                    <div class="container-fluid" ng-include="'topicButtonsTemplate'"></div>
-                </tr>
-            </script>
 
             <script type="text/ng-template" id="forumHeadTemplate">
                 <!-- <span style="justify-self: flex-start;">Threads</span>
@@ -332,31 +209,33 @@
                         <tr>
                             <td>
                                 <a href="#">
-                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('new-topic-editor-modal')">
+                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('new-topic-editor-modal', true)">
                                 </a>
                             </td>
                             <td>
                                 <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image" ng-click="loadTopics()">
                             </td>
                             <td class="Fix" nowrap="nowrap"><b>&nbsp;Search&nbsp;</b></td>
-                            <td><input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text"></td>
+                            <td>
+                                <input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text" searchtopics>
+                            </td>
                             <td class="Fix" nowrap="nowrap"><b>&nbsp;Data&nbsp;</b></td>
                             <td class="Fix" nowrap="nowrap">
                                 <datepicker date-format="dd-MM-yyyy">
-                                <input maxlength="10" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true" ng-model="date" class="angular-datepicker-input">
-                                <span class="mat-datepicker-toggle" matsuffix="">
-                                    <button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0" style="background-color: transparent; border: 0;">
-                                        <span class="mat-button-wrapper">
-                                            <!---->
-                                            <svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px">
-                                                <path d="M0 0h24v24H0z" fill="none"></path>
-                                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path>
-                                            </svg>
-                                        </span>
-                                        <div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
-                                        <div class="mat-button-focus-overlay"></div>
-                                    </button>
-                                </span>
+                                    <input maxlength="10" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true" ng-model="searchDate" class="angular-datepicker-input">
+                                    <span class="mat-datepicker-toggle" matsuffix="">
+                                        <button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0" style="background-color: transparent; border: 0;">
+                                            <span class="mat-button-wrapper">
+                                                <!---->
+                                                <svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px">
+                                                    <path d="M0 0h24v24H0z" fill="none"></path>
+                                                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path>
+                                                </svg>
+                                            </span>
+                                            <div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
+                                            <div class="mat-button-focus-overlay"></div>
+                                        </button>
+                                    </span>
                                 </datepicker>
                             </td>
                             <td width="99%">&nbsp;</td>
@@ -383,7 +262,7 @@
                         <td style="width:5%;">&nbsp;</td>
                     </tr>
                 </thead>
-                <tbody ng-repeat="topic in topics" >
+                <tbody ng-repeat="topic in topics" ng-if="topics.length > 0">
 
             <!--<div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
                 <div class="container-fluid topic px-0" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
@@ -413,12 +292,12 @@
 
                                 <hr>
                 
-                                <div style="display: flex; flex-flow: row; justify-content: flex-end;">
+                                <div style="display: flex; flex-flow: row; justify-content: flex-end;  padding-bottom: 1.5rem;">
                                     <div class="btn-group btn-group-sm" role="group" aria-label="Thread Buttons">
-                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('new-topic-editor-modal')">New</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('add-topic-editor-modal')">Add</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('reply-topic-editor-modal')">Reply</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="openModal('edit-topic-editor-modal')">Change</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.topicOnClick('new_topic', topic)">New</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.topicOnClick('add_topic', topic)">Add</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.topicOnClick('reply_topic', topic)">Reply</button>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.topicOnClick('edit_topic', topic)">Edit</button>
                                         <button type="button" class="btn btn-outline-primary btn-sm topic-buttons" ng-click="forum.deleteTopic(topic)">Delete</button>
                                     </div>
                                 </div>
@@ -427,11 +306,19 @@
                     </tr>
 
                 </tbody>
+
+                <tbody ng-if="topics.length == 0">
+                    <tr>
+                        <td style="text-align: center; padding-top: 10rem; padding-bottom: 10rem; background-color: white;">Non ci sono discussioni in questo forum</td>
+                    <tr>
+                </tbody>
             </table>
 
             <!-- Forum Header Bottom -->
             <div class="container-fluid pl-0 pr-0" ng-include="'forumHeadTemplate'"></div>
         </div>
+
+        <!-- Modals -->
 
         <modal id="new-topic-editor-modal">
             <div class="modal" ng-if="isLogged()">
@@ -454,7 +341,7 @@
                     <br>
 
                     <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Save</button>
-                    <button ng-click="closeModal('new-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal" ng-if="!isLogged()">
@@ -464,11 +351,48 @@
 
                     <br>
 
-                    <button ng-click="closeModal('new-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
         </modal>
+
+        <modal id="add-topic-editor-modal">
+                <div class="modal" ng-if="isLogged()">
+                    <div class="modal-body">
+                        <h1>Add Topic</h1>
+                        <p class="alert alert-danger" ng-if="addTopicError">
+                            {{addTopicError}}
+                        </p>
+                        <p class="alert alert-success" ng-if="addTopicSuccess">
+                            {{addTopicSuccess}}
+                        </p>
+                        <p>
+                            Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
+                            <br>
+                            Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
+                        </p>
+    
+                        <textarea ng-model="forum.topic.text" id="ckeditor-add-topic" ckeditor></textarea>
+    
+                        <br>
+    
+                        <button ng-click="forum.addTopicSameLevel(current_topic, forum.topic);" class="btn btn-primary">Save</button>
+                        <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
+                    </div>
+                </div>
+                <div class="modal" ng-if="!isLogged()">
+                    <div class="modal-body">
+                        <h1>Errore</h1>
+                        Devi fare il login per procedere
+    
+                        <br>
+    
+                        <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
+                    </div>
+                </div>
+                <div class="modal-background"></div>
+            </modal>
 
         <modal id="reply-topic-editor-modal">
             <div class="modal">
@@ -485,7 +409,7 @@
                     <br>
 
                     <button ng-click="forum.replyToTopic(current_topic, forum.topic);" class="btn btn-primary">Reply</button>
-                    <button ng-click="closeModal('reply-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -505,10 +429,8 @@
 
                     <br>
 
-                    <input type="hidden" name="id" ng-model="current_topic.id">
-
-                    <button ng-click="forum.editTopic(current_topic);" class="btn btn-primary">Edit</button>
-                    <button ng-click="closeModal('edit-topic-editor-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="forum.editTopic(current_topic);" class="btn btn-primary">Salva Modifiche</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -536,7 +458,7 @@
                     <br>
 
                     <button ng-click="forum.login(forum.newUser);" class="btn btn-primary">Login</button>
-                    <button ng-click="closeModal('login-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -566,7 +488,7 @@
                     <br>
 
                     <button ng-click="forum.registerNewUser(forum.newUser);" class="btn btn-primary">Register</button>
-                    <button ng-click="closeModal('register-user-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -587,15 +509,17 @@
                     <br>
 
                     <button ng-click="forum.editUser(forum.newUser);" class="btn btn-primary">Salva Modifiche</button>
-                    <button ng-click="closeModal('edit-user-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
                 <div class="modal-body" ng-if="!isLogged()">
                     <h1>Devi Essere Loggato Per Modificare Il Tuo Profilo</h1>
-                    <button ng-click="closeModal('edit-user-modal');" class="btn btn-primary">Close</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
             </div>
             <div class="modal-background"></div>
         </modal>
+
+        <!--/ Modals -->
 
     </div>
 
@@ -613,6 +537,9 @@
 
     <script src="/scripts/angularjs-datepicker/dist/angular-datepicker.min.js"></script>
 
+    <script src="/ng/forum.js"></script>
+    <script src="/ng/modal.js"></script>
+    <script src="/ng/user.js"></script>
     <script src="app.js"></script>
 
 </body>

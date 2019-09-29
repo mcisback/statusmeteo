@@ -56,7 +56,7 @@ const topicSchema = new mongoose.Schema({
 }, {timestamps: true});
 
 const autoPopulateChildren = function(next) {
-    this.populate('topics')
+    this.populate('topics').populate('forum', '_id title')
     next()
 }
 

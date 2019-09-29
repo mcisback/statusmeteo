@@ -35,11 +35,11 @@ const userSchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    group_id: {
+    /*group_id: {
         type: Number,
         unique: false,
         default: 4001
-    },
+    },*/
     password: {
         type: String,
         unique: false,

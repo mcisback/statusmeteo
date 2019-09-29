@@ -7,64 +7,13 @@
     <title>Status Meteo</title>
     
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="/ng/modal.css">
 
     <style>
         .hide {
             display: none;
         }
         .show {
-            display: block;
-        }
-        /* MODAL STYLES
-        -------------------------------*/
-        modal {
-        /* modals are hidden by default */
-            display: none;
-        }
-        modal .modal {
-            /* modal container fixed across whole screen */
-            
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* z-index must be higher than .modal-background */
-            
-            z-index: 1000;
-            /* enables scrolling for tall modals */
-            
-            overflow: auto;
-        }
-        modal .modal .modal-body {
-            padding: 20px;
-            background: #fff;
-            /* margin exposes part of the modal background */
-
-            margin: 40px;
-        }
-        modal .modal-background {
-        /* modal background fixed across whole screen */
-
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* semi-transparent black  */
-
-            background-color: #000;
-            opacity: 0.75;
-            /* z-index must be below .modal and above everything else  */
-
-            z-index: 900;
-        }
-        body.modal-open {
-        /* body overflow is hidden to hide main scrollbar when modal window is open */
-            overflow: hidden;
-        }
-
-        .modal-open .modal {
             display: block;
         }
 
@@ -85,11 +34,6 @@
         
         #mainWrapper > header > h1 {
             color: white;
-        }
-
-        body {
-            background-image: url('assets/img/bg.jpg');
-            background-repeat: repeat;
         }
 
         #mainWrapper > .jumbotron {
@@ -132,15 +76,32 @@
             border-right: thin white 2px;
         }
 
+        .sidebar-link {
+            color: white;
+        }
+
+        .sidebar-link:hover {
+            color: white;
+            background-color: grey;
+        }
+
+        .data-table tbody tr td {
+            max-width: 10rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+        }
+
+        .data-table tbody tr {
+            cursor: pointer;
+        }
+
     </style>
 </head>
-<body ng-app="forumApp">
+<body ng-app="adminApp" ng-controller="AdminController as admin" style="background-color: white;">
     
-    <div id="mainWrapper" class="container-fluid" ng-controller="AdminController as admin" ng-init="onload()">
+    <div id="mainWrapper" class="container-fluid" ng-init="onload()" ng-if="isLogged() && isAdmin()">
 
         <header class="container-fluid">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: transparent !important;">
-                <a class="navbar-brand" href="#">StatusMeteo Admin Area</a>
+                <a class="navbar-brand" href="#">StatusMeteo</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
                 </button>
@@ -148,23 +109,17 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                   <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
-                      <a class="nav-link" href="#">Forum Home</a>
+                      <a class="nav-link" href="#">Admin Area</a>
                     </li>
-                    <li class="nav-item dropdown" ng-if="!isLogged()">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Login
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="#" ng-click="openModal('login-modal')">Login</a>
-                            <a class="dropdown-item" href="#" ng-click="openModal('register-user-modal')">Register</a>
-                        </div>
-                    </li>
+                    <li class="nav-item">
+                            <a class="nav-link" href="/">Forum</a>
+                          </li>
                     <li class="nav-item dropdown" ng-if="isLogged()">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Benvenuto {{current_user.username}}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="#" ng-click="forum.doLogout()">Logout</a>
+                            <a class="dropdown-item" href="#" ng-click="doLogout()">Logout</a>
                         </div>
                     </li>
                   </ul>
@@ -175,17 +130,70 @@
                 </div>
               </nav>
         </header>
+        
+        <!-- Left Sidebar -->
+        <div class="row" style="height: 100vh; background-color: white;">
+            <!-- Left Sidebar Menu -->
+            <div class="col-3" style="padding: 0; text-align: center; color: white; padding-top: 2rem; background-color: black; max-width: 10rem;">
+                <div class="nav navbar-dark bg-dark flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical" style="background-color: black !important;">
+                    <div ng-repeat="navitem in leftNavMenu track by $index">
+                        <a ng-if="navitem.active" class="nav-link active sidebar-link" id="v-pills-{{$index}}-tab" data-toggle="pill" href="#v-pills-{{$index}}" role="tab" aria-controls="v-pills-{{$index}}-tab" aria-selected="true">
+                            {{navitem.text}}
+                        </a>
+                        <a ng-if="!navitem.active" ng-click="navTo($index)" class="nav-link sidebar-link" id="v-pills-{{$index}}-tab" data-toggle="pill" href="#v-pills-{{$index}}" role="tab" aria-controls="v-pills-{{$index}}-tab" aria-selected="true">
+                            {{navitem.text}}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <script type="text/ng-template" id="dataTable">
+                <table class="table data-table">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th ng-repeat="header in dataHeaders track by $index" scope="col">{{header}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="d in data" ng-mouseover="ishover = true" ng-mouseleave="ishover = false" ng-class="{'bg-primary': ishover}">
+                            <td ng-repeat="(key, value) in d">{{value}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </script>
+            <!-- Left Sidebar Content -->
+            <div class="col-9" style="padding: 0; background-color: white; margin: 0 auto;">
+                <div class="tab-content" id="v-pills-tabContent" ng-init="navTo(0)">
+                    <div ng-if="current_nav == 0" class="tab-pane fade show active" id="v-pills-0" role="tabpanel" aria-labelledby="v-pills-1-tab">
+                        <h1 style="text-align: center; padding-bottom: 2rem;">Users</h1>
 
-        <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px;">
+                        <div ng-include="'dataTable'"></div>
+                    </div>
+                    <div ng-if="current_nav == 1" class="tab-pane fade show active" id="v-pills-1" role="tabpanel" aria-labelledby="v-pills-2-tab">
+                        <h1 style="text-align: center; padding-bottom: 2rem;">Forums</h1>
+
+                        <div ng-include="'dataTable'"></div>
+                    </div>
+                    <div ng-if="current_nav == 2" class="tab-pane fade show active" id="v-pills-2" role="tabpanel" aria-labelledby="v-pills-3-tab">
+                        <h1 style="text-align: center; padding-bottom: 2rem;">Topics</h1>
+
+                        <div ng-include="'dataTable'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--/ Left Sidebar -->
+
+    </div>
+
+    <div ng-if="!(isLogged() && isAdmin())">
+        <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px; text-align: center;">
             <div class="container">
-                <h1 class="display-4">Welcome to STATUS METEO Admin Area!</h1>
+                <h1 class="display-4">Error!</h1>
                 <p class="lead">
-                    In questo forum ognuno può esprimere liberamente la propria opinione nei limiti stabiliti dal regolamento. La qualità del forum dipende da quella dei vostri interventi. Fatene buon uso!
-                    Descrizione sito amatoriale durante l utilizzo, consigli di acquisto e racconto delle proprie esperienze. Come per l area Discussioni, i thread verranno riportati in evidenza dagli aggiornamenti
+                    You must be logged in and admin to see this page !
                 </p>
             </div>
         </div>
-
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
@@ -197,7 +205,10 @@
 
     <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
 
-    <script src="../app.js"></script>
+    <script src="/ng/forum.js"></script>
+    <script src="/ng/modal.js"></script>
+    <script src="/ng/user.js"></script>
+    <script src="admin_app.js"></script>
 
 </body>
 </html>

@@ -40,160 +40,24 @@ const sortDescByMaxTm = (a, b) => {
 }
 
 var app = angular.module('forumApp', [
-    '720kb.datepicker'
+    '720kb.datepicker',
+    'forumApiService',
+    'modalService',
+    'userService'
 ])
 
-app.service('ForumApiService', function($http) {
-    api = {}
-
-    api.endpoint = "http://localhost:8082/api"
-
-    api.setJWTToken = function(jwt_token) {
-        // $http.defaults.headers.Authorization = 'Bearer ' + jwt_token;
-        $http.defaults.headers.common.Authorization = 'Bearer ' + jwt_token;
-    }
-
-    api.unsetJWTToken = function() {
-        // $http.defaults.headers.Authorization = '';
-        $http.defaults.headers.common.Authorization = '';
-    }
-
-    api.getTopics = function() {
-        return $http.get(api.endpoint + '/topics')
-    }
-
-    api.getTopicsByForum = function(forum_id) {
-        return $http.get(api.endpoint + '/topics/byforum/' + forum_id)
-    }
-
-    api.getTopicsByParent = function(parent_id) {
-        return $http.get(api.endpoint + '/topics/byparent/' + parent_id)
-    }
-
-    api.getForums = function() {
-        return $http.get(api.endpoint + '/forums')
-    }
-
-    api.addNewTopic = function(topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-        
-        return $http.post(api.endpoint + '/topic', JSON.stringify(topic))
-    }
-
-    api.editTopic = function(topic_id, topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-
-        return $http.put(api.endpoint + '/topic/' + topic_id, JSON.stringify(topic))
-    }
-
-    api.replyToTopic = function(parent_topic_id, topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-
-        return $http.post(api.endpoint + '/topic/reply/' + parent_topic_id, JSON.stringify(topic))
-    }
-
-    api.deleteTopic = function(topic_id) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-
-        return $http.delete(api.endpoint + '/topic/' + topic_id)
-    }
-
-    api.login = function(user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-        
-        return $http.post(api.endpoint + '/login', JSON.stringify(user))
-    }
-
-    api.registerNewUser = function(user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-        
-        return $http.post(api.endpoint + '/user/register', JSON.stringify(user))
-    }
-
-    api.editUser = function(_id, user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
-        
-        return $http.put(api.endpoint + '/user/edit/' + _id, JSON.stringify(user))
-    }
-
-    return api
-})
-
-app.service('ModalService', function() {
-    var modals = []; // array of modals on the page
-    var service = {};
-
-    service.Add = Add;
-    service.Remove = Remove;
-    service.Open = Open;
-    service.Close = Close;
-
-    return service;
-
-    function Add(modal) {
-        // add modal to array of active modals
-        modals.push(modal);
-    }
-
-    function Remove(id) {
-        // remove modal from array of active modals
-        var modalToRemove = _.findWhere(modals, { id: id });
-        modals = _.without(modals, modalToRemove);
-    }
-
-    function Open(id) {
-        // open modal specified by id
-        var modal = _.findWhere(modals, { id: id });
-
-        modal.open();
-    }
-
-    function Close(id) {
-        // close modal specified by id
-        var modal = _.findWhere(modals, { id: id });
-
-        modal.close();
-    }
-})
-
-app.service('UserService', function() {
-    var current_user = {}; // array of modals on the page
-    var service = {};
-    var jwt_token = '';
-    var is_logged = false;
-
-    service.saveNewUser = function(user, _jwt_token) {
-        current_user = user
-        jwt_token = _jwt_token
-
-        window.localStorage.setItem('user', JSON.stringify(current_user))
-        window.localStorage.setItem('token', jwt_token)
-
-        is_logged = true
-    }
-
-    service.getUserAndToken = function() {
-        return {
-            user: JSON.parse(window.localStorage.getItem('user')),
-            token: window.localStorage.getItem('token')
-        }
-    }
-
-    service.isLogged = function() {
-        return (window.localStorage['user'] || false) && (window.localStorage['token'] || false)
-    }
-
-    service.isAdmin = function() {
-        return this.isLogged() && this.getUserAndToken().user.is_admin
-    }
-
-    service.deleteUser = function() {
-        window.localStorage.removeItem('user')
-        window.localStorage.removeItem('token')
-    }
-
-    return service;
-})
+// Directives
+app.directive('searchtopics', function () {
+    return function ($scope, element) {
+        console.log('search-topics binding to element: ', element)
+        element.bind("keyup", function (event) {
+          var val = element.val();
+          if(val.length > 2) {
+            $scope.searchTopics(val);
+          }
+        });
+    };
+});
 
 app.directive('ckeditor', function Directive($rootScope) {
     return {
@@ -231,65 +95,25 @@ app.directive('ckeditor', function Directive($rootScope) {
             ckeditor.on('change', function () {
                 ngModel.$setViewValue(this.getData());
             });
+
+            ckeditor.on('pasteState', function() {
+                scope.$apply(function() {
+                    ngModel.$setViewValue(ckeditor.getData());
+                });
+            });
+    
+            ngModel.$render = function(value) {
+                ckeditor.setData(ngModel.$viewValue);
+            };
         }
     };
-})
-
-app.directive('modal', function(ModalService) {
-    return {
-        link: function (scope, element, attrs) {
-            // ensure id attribute exists
-            if (!attrs.id) {
-                console.error('modal must have an id');
-                return;
-            }
-
-            // move element to bottom of page (just before </body>) so it can be displayed above everything else
-            element.appendTo('body');
-
-            // close modal on background click
-            element.on('click', function (e) {
-                var target = $(e.target);
-                if (!target.closest('.modal-body').length) {
-                    scope.$evalAsync(Close);
-                }
-            });
-
-            // add self (this modal instance) to the modal service so it's accessible from controllers
-            var modal = {
-                id: attrs.id,
-                open: Open,
-                close: Close
-            };
-
-            ModalService.Add(modal);
-        
-            // remove self from modal service when directive is destroyed
-            scope.$on('$destroy', function() {
-                ModalService.Remove(attrs.id);
-                element.remove();
-            });                
-
-            // open modal
-            function Open() {
-                element.show();
-                $('body').addClass('modal-open');
-            }
-
-            // close modal
-            function Close() {
-                element.hide();
-                $('body').removeClass('modal-open');
-            }
-        }
-    }
 })
 
 app.filter('safeHtml', function ($sce) {
     return function (val) {
         return $sce.trustAsHtml(val);
-    };
-});
+    }
+})
 
 var forumController = app.controller(
     'ForumController',
@@ -328,6 +152,7 @@ var forumController = app.controller(
     $scope.current_page = 0
     $scope.current_topic = {}
     $scope.current_modal = ''
+    $scope.searchDate = null
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
@@ -375,7 +200,7 @@ var forumController = app.controller(
     forum.replyToTopic = function(parentTopic, newTopic) {
         newTopic.timestamp = Date.now()
         newTopic.maxTm = newTopic.timestamp
-        newTopic.level = parentTopic.level || 0
+        newTopic.level = parentTopic.level || 1
         newTopic.level++
         newTopic.parent = parentTopic._id
         newTopic.user = $scope.current_user._id
@@ -393,6 +218,30 @@ var forumController = app.controller(
                 console.log('replyToTopic res: ', res)
 
                 $scope.loadTopics()
+
+                $scope.closeCurrentModal()
+            })
+            .catch(err => console.log(err))
+    }
+
+    forum.addTopicSameLevel = function(parentTopic, topic) {
+        topic.timestamp = Date.now()
+        topic.maxTm = topic.timestamp
+        topic.level = parentTopic.level || 1
+        topic.parent = parentTopic.parent
+        topic.user = $scope.current_user._id
+        topic.username = $scope.current_user.username
+        topic.forum = $scope.currentForum._id
+
+        console.log('AddTopicSameLevel is: ', topic)
+
+        ForumApiService.replyToTopic(parentTopic.parent, topic)
+            .then(res => {
+                console.log('AddTopicSameLevel res: ', res)
+
+                $scope.loadTopics()
+
+                $scope.closeCurrentModal()
             })
             .catch(err => console.log(err))
     }
@@ -410,19 +259,40 @@ var forumController = app.controller(
 
         ForumApiService.addNewTopic(topic)
             .then(response => {
-                $scope.apiResponse = response.data
+                // $scope.apiResponse = response.data
 
                 $scope.loadTopics()
+
+                $scope.closeCurrentModal()
             })
+            .catch(err => console.log(err))
+    }
+
+    forum.editTopic = function(topic) {
+        let newTopic = {}
+
+        newTopic.title = topic.title
+        newTopic.subtitle = topic.subtitle
+        newTopic.text = topic.text
+
+        ForumApiService.editTopic(topic._id, newTopic)
+            .then(res => {
+                console.log('editTopic res: ', res)
+
+                $scope.loadTopics()
+
+                $scope.closeCurrentModal()
+            })
+            .catch(err => console.log(err))
     }
 
     forum.deleteTopic = function(topic) {
-        var r = confirm("Sei cancelli il topic, non sarà più disponibile, sei sicuro ?");
+        var r = confirm("Se cancelli il topic, non sarà più disponibile, sei sicuro ?");
 
         if (r == true) {
             ForumApiService.deleteTopic(topic._id)
             .then(response => {
-                if(response.data.data.success == true) {
+                if(response.data.success == true) {
                     alert('Topic rimosso correttamente')
                 } else {
                     alert('Qualcosa è andato storto')
@@ -453,9 +323,9 @@ var forumController = app.controller(
 
                     UserService.saveNewUser(response.data.data.user, response.data.data.token)
 
-                    $scope.closeModal('login-modal')
-
                     ForumApiService.setJWTToken(response.data.data.token)
+
+                    $scope.closeCurrentModal()
 
                     /*$scope.current_user = response.data.data.user
                     $scope.jwt_token = response.data.data.token
@@ -518,6 +388,10 @@ var forumController = app.controller(
         ForumApiService.editUser($scope.current_user._id, newUser)
             .then(res => {
                 console.log('Edit User Response: ', res)
+
+                alert('Utente Modificato')
+
+                $scope.closeCurrentModal()
             })
             .catch(err => console.log(err))
     }
@@ -533,25 +407,61 @@ var forumController = app.controller(
         $scope._isLogged = false
     }
 
-    $scope.loadForum = function($event, $index, f) {
+    $scope.searchTopics = function(query) {
+        console.log('Searching: ', query)
+
+        ForumApiService.searchTopics(query)
+            .then(res => {
+                console.log('Topics Search Result: ', res)
+
+                $scope.topics = res.data
+
+                $scope.reOrderTopics()
+            })
+            .catch(err => console.log(err))
+    }
+
+    $scope.$watch('searchDate', function (value) {
+        let liveDate = null
+
+        try {
+            liveDate = new Date(value);
+        } catch(e) {}
+        
+        if (!liveDate) {
+            $scope.error = "This is not a valid date";
+
+            console.log($scope.error)
+        } else {
+            console.log('This is A VALID DATE')
+
+            $scope.error = false;
+
+            ForumApiService.searchTopics(liveDate)
+            .then(res => {
+                console.log('Topics Search Result: ', res)
+
+                $scope.topics = res.data
+
+                $scope.reOrderTopics()
+            })
+            .catch(err => console.log(err))
+        }
+    })
+
+    $scope.loadForum = function($event, $index, _forum) {
         console.log('loadForum $index: ', $index)
-        console.log('loadForum, ev: ', $event, f)
+        console.log('loadForum, ev: ', $event, _forum)
 
         $scope.forumList.map(item => item.is_active = false)
 
-        f.is_active = true;
+        _forum.is_active = true;
 
-        $scope.currentForum = f
+        $scope.currentForum = _forum
 
         console.log('New Current Forum is: ', $scope.currentForum)
 
         $scope.loadTopics()
-
-        /*if($($event.target).hasClass('forum-tab-active')) {
-            return;
-        }
-
-        $($event.target).addClass('forum-tab-active')*/
     }
 
     $scope.flat = function(array) {
@@ -565,17 +475,12 @@ var forumController = app.controller(
         return result;
     }
 
-    $scope.rebuildTopics = function(_topics) {
-        for(let i = 0; i < _topics.length; i++) {
-            ForumApiService.getTopicsByParent(_topics[i]._id)
-                .then(data => data.data)
-                .then(children => {
-                    console.log(`Parent ${_topics[i]._id} children: `, children)
-                    _topics[i].topics = children
-                })
-        }
+    $scope.reOrderTopics = function(topics) {
+        if($scope.topics.length > 0){
+            $scope.sortAll($scope.topics)
 
-        return _topics
+            $scope.topics = $scope.flat($scope.topics)
+        }
     }
 
     $scope.loadTopics = function() {
@@ -586,10 +491,8 @@ var forumController = app.controller(
                 // $scope.topics = $scope.rebuildTopics(response.data)
 
                 console.log('$scope.topics: ', $scope.topics)
-
-                $scope.sortAll($scope.topics)
-
-                $scope.topics = $scope.flat($scope.topics)
+                
+                $scope.reOrderTopics()
             })
     }
     
@@ -683,16 +586,49 @@ var forumController = app.controller(
         })
     }
 
-    $scope.openModal = function(id){
-        $scope.current_modal = id
+    $scope.openModal = function(id, checkIfLogged=false){
+        if(checkIfLogged) {
+            if(!$scope.isLogged()) {
+                $scope.current_modal = 'login-modal'
+            } else {
+                $scope.current_modal = id
+            }
+        } else {
+            $scope.current_modal = id
+        }
 
-        ModalService.Open(id)
+        console.log('openModal current_modal is: ', $scope.current_modal)
+
+        ModalService.Open($scope.current_modal)
     }
 
     $scope.closeModal = function(id){
         $scope.current_modal = ''
 
         ModalService.Close(id)
+    }
+
+    $scope.closeCurrentModal = function(){
+        console.log('closeCurrentModal is: ',  $scope.current_modal)
+
+        $scope.closeModal($scope.current_modal)
+    }
+
+    forum.topicOnClick = function(action, topic) {
+        const map = {
+            new_topic: 'new-topic-editor-modal',
+            add_topic: 'add-topic-editor-modal',
+            reply_topic: 'reply-topic-editor-modal',
+            edit_topic: 'edit-topic-editor-modal'
+        }
+
+        if(!(action in map)) {
+            throw new Error('Topic Action not present')
+        }
+
+        $scope.current_topic = topic
+
+        $scope.openModal(map[action], true)
     }
 
     $scope.showTopicText = function($event, topic) {
@@ -710,14 +646,3 @@ var forumController = app.controller(
     }
 
 }]);
-
-/*var adminAreaController = app.controller(
-    'ForumController',
-    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', function($scope, $window, UserService, ModalService, ForumApiService) {
-    var adminArea = this;
-
-    // Do Onload Things...
-    $scope.onload = function() {
-    }
-
-}]);*/

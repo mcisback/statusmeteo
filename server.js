@@ -5,6 +5,7 @@ const app = express()
 
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+// const cookieParser = require("cookie-parser");
 
 const path = require('path')
 
@@ -19,6 +20,11 @@ const Topic = require('./models/topic')
 const Forum = require('./models/forum')
 
 const models = { User, Topic, Forum }
+const modelsMap = {
+    'users': User,
+    'topics': Topic,
+    'forums': Forum
+}
 
 const api_endpoint = '/api'
 
@@ -27,7 +33,7 @@ const connectDb = () => {
 
     mongoose.set('useCreateIndex', true);
 
-    return mongoose.connect(config[env].databaseUrl, { useNewUrlParser: true });
+    return mongoose.connect(config[env].databaseUrl, { useNewUrlParser: true, useFindAndModify: false });
 }
 
 // Enable Cors
@@ -35,7 +41,8 @@ app.use(cors())
 
 // Use publicDir for static files
 app.use(express.static(__dirname + config[env].publicDir));
-app.use('/scripts', express.static(__dirname + '/node_modules'));
+app.use('/scripts', express.static(__dirname + '/node_modules'))
+app.use('/ng', express.static(__dirname + config[env].publicDir + '/ng'))
 
 // Read Post JSON Body
 app.use(express.json())
@@ -92,6 +99,16 @@ const checkIfUserIsAdmin = (req, res, next) => {
     }
 }
 
+const checkAndSetAdmin = (req, res, next) => {
+    console.log('checkAndSetAdmin: ', req.decoded)
+
+    if(req.decoded.user.is_admin === true) {
+        req.is_admin = true
+
+        next()
+    }
+}
+
 // Serve Static Files and JS App
 app.get('/', function(req, res) {
     console.log('Serving Frontend on ', publicDir)
@@ -135,6 +152,35 @@ app.get(api_endpoint + '/topics/byparent/:parentId', function (req, res) {
     })
 })
 
+// Search topics by string
+app.get(api_endpoint + '/topics/search/:query', function (req, res) {
+    console.log(`SEARCH Topics with query: ${req.params.query}`)
+    
+    models.Topic.find({
+        "$or": [
+            {title: {$regex: req.params.query, $options: 'i'}},
+            {subtitle: {$regex: req.params.query, $options: 'i'}},
+            {text: {$regex: req.params.query, $options: 'i'}}
+        ]
+    }, function(err, data) {
+        console.log('SEARCH topics: ', err, data, req.params.query, data.length)
+
+        res.json(data)
+    })
+})
+
+// Search topics by date
+app.get(api_endpoint + '/topics/searchbydate/:date', function (req, res) {
+    console.log(`SEARCH TopicsByDate with date: ${req.params.date}`)
+    
+    models.Topic.find({
+        createdAt: {$gte: req.params.date}
+    }, function(err, data) {
+        console.log('SEARCH TopicsByDate: ', err, data, req.params.query, data.length)
+
+        res.json(data)
+    })
+})
 
 // Create New Topic
 app.post(api_endpoint + '/topic', checkToken, function (req, res) {
@@ -176,9 +222,9 @@ app.post(api_endpoint + '/topic', checkToken, function (req, res) {
 })
 
 // Delete Topic
-app.delete(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
+app.delete(api_endpoint + '/topic/delete/:topicId', checkToken, function (req, res) {
 
-    models.Topic.findByIdAndRemove(req.params.propertyId,req.body, function(err, doc) {
+    models.Topic.findByIdAndRemove(req.params.topicId, req.body, function(err, doc) {
         if (err) {
             let r = {success:  false, data: {msg: err}}
 
@@ -195,10 +241,12 @@ app.delete(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
 
 // Modify Topic
 // TODO Check Topic Owner
-app.put(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
+app.put(api_endpoint + '/topic/edit/:topicId', checkToken, function (req, res) {
 
     console.log('Modifying TOPIC ID: ', req.params.topicId)
     // console.log('req, res: ', req, res)
+
+    console.log('New Data: ', req.body)
 
     models.Topic.findOneAndUpdate({_id: req.params.topicId}, req.body, {new: true}, (err, doc) => {
         if (err) {
@@ -216,6 +264,7 @@ app.put(api_endpoint + '/topic/:topicId', checkToken, function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})
 })
 
+// Get one topic by id
 app.get(api_endpoint + '/topic/get/:topicId', function (req, res) {
     console.log('Getting Topic with TOPIC ID: ', req.params.topicId)
 
@@ -293,6 +342,26 @@ app.get(api_endpoint + '/users', checkToken, checkIfUserIsAdmin, function (req, 
     })
 })
 
+// Get field types (for admin)
+app.get(api_endpoint + '/getfields/:collection', checkToken, checkIfUserIsAdmin, function (req, res) {
+    let _data = []
+
+    console.log('Requesting fields for collection: ', req.params.collection)
+
+    modelsMap[req.params.collection].schema.eachPath(function(key) {
+        _data.push({
+            key: key,
+            type: modelsMap[req.params.collection].schema.path(key).instance.toLowerCase()
+        })
+    })
+
+    console.log('_data', _data)
+
+    res.json({success: true, data:{msg: 'Success', data: _data}})
+})
+
+
+
 // Create New user (for registration)
 app.post(api_endpoint + '/user/register', function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})
@@ -320,11 +389,23 @@ app.post(api_endpoint + '/user/register', function (req, res) {
 
 // Delete user (for user or admin)
 app.delete(api_endpoint + '/user/delete/:userId', checkToken, checkIfUserIsAdmin, function (req, res) {
-    res.json({"msg": "Not Yet Implemented"})
+    models.User.findByIdAndRemove(req.params.userId, req.body, function(err, doc) {
+        if (err) {
+            let r = {success:  false, data: {msg: err}}
+
+            console.log('User DELETE Error: ', r)
+
+            res.json(r)
+        } else {
+            console.log('User DELETE Success', doc)
+
+            res.json({success: true, data: {msg: doc}})
+        }
+    })
 })
 
 // Modify user (for user or admin)
-app.put(api_endpoint + '/user/edit/:userId', checkToken, function (req, res) {
+app.put(api_endpoint + '/user/edit/:userId', checkToken, checkAndSetAdmin, function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})
 
     console.log('Modifying User: ', req.params.userId)
