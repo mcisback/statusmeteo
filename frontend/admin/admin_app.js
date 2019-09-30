@@ -18,29 +18,70 @@ var adminController = app.controller(
         $scope.current_topic = {}
         $scope.current_modal = ''
         $scope.ishover = false
+        $scope.selectedRows = []
+        $scope.data = []
 
-        $scope.leftNavMenu = [
-            {text: 'Users', active: true, action: () => {adminCtrl.getUsers()}},
-            {text: 'Forums', active: false, action: () => {adminCtrl.getForums()}},
-            {text: 'Topics', active: false, action: () => {adminCtrl.getTopics()}}
-        ]
+        $scope.leftNavMenu = []
+
+         // column to sort
+        $scope.column = null
+        
+        // sort ordering (Ascending or Descending). Set true for desending
+        $scope.reverse = false;
+
+        // called on header click
+        $scope.sortColumn = function(col){
+            $scope.column = col
+
+            if($scope.reverse){
+                $scope.reverse = false
+                $scope.reverseclass = 'arrow-up'
+            } else {
+                $scope.reverse = true
+                $scope.reverseclass = 'arrow-down'
+            }
+        }
+        
+        // remove and change class
+        $scope.sortClass = function(col){
+            if($scope.column == col ){
+                if($scope.reverse){
+                    return 'arrow-down' 
+                } else {
+                    return 'arrow-up'
+                }
+            }else{
+                return ''
+            }
+        }
 
         // Do Onload Things...
         $scope.onload = function() {
             console.log('$scope.onload admin_app.js')
 
+            $scope.leftNavMenu = [
+                {text: 'Users', active: true, action: () => {adminCtrl.getUsers()}},
+                {text: 'Forums', active: false, action: () => {adminCtrl.getForums()}},
+                {text: 'Topics', active: false, action: () => {adminCtrl.getTopics()}}
+            ]
+
+            console.log('$scope.leftNavMenu: ', $scope.leftNavMenu)
+            console.log('typeof $scope.leftNavMenu: ', typeof $scope.leftNavMenu)
+
+            /*for(let i = 0; i < $scope.leftNavMenu; i++) {
+                let item = $scope.leftNavMenu[i]
+
+                Object.assign($scope.selectedRows, {
+                    [item.text.toLowerCase()]: []
+                })
+            }
+
+            console.log('$scope.selectedRows: ', $scope.selectedRows)*/
+
             ForumApiService.getFieldsType('users')
                 .then(res => res.data)
                 .then(data => console.log(data))
                 .catch(err => console.log(err))
-        }
-
-        $scope.hoverIn = function($event) {
-            console.log($event)
-        }
-
-        $scope.hoverOut = function($event) {
-            console.log($event)
         }
 
         $scope.isLogged = function() {
@@ -62,6 +103,14 @@ var adminController = app.controller(
 
                 ForumApiService.setJWTToken(userData.token)
 
+                if(UserService.isLoginExpired()) {
+                    $scope.doLogout()
+        
+                    alert('Il Login è scaduto, devi rifare il login per accedere')
+                    
+                    return false
+                }
+
                 return true
             }
 
@@ -70,6 +119,26 @@ var adminController = app.controller(
 
         $scope.isAdmin = function() {
             return $scope.current_user.is_admin
+        }
+
+        $scope.selectRow = function(row) {
+            if(!$scope.selectedRows.includes(row)) {
+                $scope.selectedRows.push(row)
+
+                console.log('ADD $scope.selectedRows: ', $scope.selectedRows)
+            } else {
+                $scope.selectedRows = $scope.selectedRows.filter(item => item._id !== row._id)
+
+                console.log('DEL $scope.selectedRows: ', $scope.selectedRows)
+            }
+        }
+
+        $scope.selectAllRows = function() {
+            if($scope.selectedRows.length == 0){
+                $scope.selectedRows = $scope.data
+            } else {
+                $scope.selectedRows = []
+            }
         }
 
         $scope.doLogout = function() {
@@ -101,6 +170,7 @@ var adminController = app.controller(
 
         $scope.navTo = function($index) {
             $scope.leftNavMenu.map(item => item.active = false)
+            $scope.selectedRows = []
 
             console.log('Current Nav: ', $scope.leftNavMenu[$index])
 
@@ -115,17 +185,26 @@ var adminController = app.controller(
             }
         }
 
+        $scope.isRowSelected = function(row) {
+            return $scope.selectedRows.includes(row)
+        }
+
+        adminCtrl.setData = function(data) {
+
+            $scope.data = data.map(item => {delete item['__v']; return item; })
+            $scope.dataHeaders = Object.keys(data[0])
+
+            console.log('$scope.data: ', $scope.data)
+            console.log('$scope.dataHeaders: ', $scope.dataHeaders)
+        }
+
         adminCtrl.getUsers = function() {
             ForumApiService.getUsers()
                 .then(response => response.data)
                 .then(data => {
                     console.log('getUsers: ', data)
 
-                    $scope.data = data
-                    $scope.dataHeaders = Object.keys(data[0])
-
-                    console.log('$scope.data: ', $scope.data)
-                    console.log('$scope.dataHeaders: ', $scope.dataHeaders)
+                    adminCtrl.setData(data)
                 })
                 .catch(err => console.log(err))
         }
@@ -136,26 +215,20 @@ var adminController = app.controller(
                 .then(data => {
                     console.log('getForums: ', data)
 
-                    $scope.data = data
-                    $scope.dataHeaders = Object.keys(data[0])
-
-                    console.log('$scope.data: ', $scope.data)
-                    console.log('$scope.dataHeaders: ', $scope.dataHeaders)
+                    adminCtrl.setData(data)
                 })
                 .catch(err => console.log(err))
         }
 
         adminCtrl.getTopics = function() {
-            ForumApiService.getTopics()
+            ForumApiService.getTopics({
+                noLevel: true
+            })
                 .then(response => response.data)
                 .then(data => {
                     console.log('getTopics: ', data)
 
-                    $scope.data = data
-                    $scope.dataHeaders = Object.keys(data[0])
-
-                    console.log('$scope.data: ', $scope.data)
-                    console.log('$scope.dataHeaders: ', $scope.dataHeaders)
+                    adminCtrl.setData(data)
                 })
                 .catch(err => console.log(err))
         }

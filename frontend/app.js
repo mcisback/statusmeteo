@@ -59,6 +59,20 @@ app.directive('searchtopics', function () {
     };
 });
 
+app.directive('myEnter', function () {
+    return function (scope, element, attrs) {
+        element.bind("keydown keypress", function (event) {
+            if(event.which === 13) {
+                scope.$apply(function (){
+                    scope.$eval(attrs.myEnter);
+                });
+
+                event.preventDefault();
+            }
+        });
+    };
+});
+
 app.directive('ckeditor', function Directive($rootScope) {
     return {
         require: 'ngModel',
@@ -115,6 +129,22 @@ app.filter('safeHtml', function ($sce) {
     }
 })
 
+app.filter('formatDate', function () {
+    return function (val) {
+        let _date = new Date(val)
+
+        return _date.toLocaleString(undefined, {
+            //dateStyle: 'medium',
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        })
+    }
+})
+
 var forumController = app.controller(
     'ForumController',
     ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', function($scope, $window, UserService, ModalService, ForumApiService) {
@@ -152,13 +182,14 @@ var forumController = app.controller(
     $scope.current_page = 0
     $scope.current_topic = {}
     $scope.current_modal = ''
-    $scope.searchDate = null
+    $scope.search_date = ''
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
         // return $scope._isLogged
 
         if(UserService.isLogged()) {
+
             let userData = UserService.getUserAndToken()
 
             $scope.current_user = userData.user
@@ -171,7 +202,16 @@ var forumController = app.controller(
 
             // console.log('userData isLogged(): ', userData)
 
+            // Set Auth Bearer Header
             ForumApiService.setJWTToken(userData.token)
+
+            if(UserService.isLoginExpired()) {
+                forum.doLogout()
+    
+                alert('Il Login è scaduto, devi rifare il login per accedere')
+                
+                return false
+            }
 
             return true
         }
@@ -321,9 +361,7 @@ var forumController = app.controller(
 
                     // $window.localstorage
 
-                    UserService.saveNewUser(response.data.data.user, response.data.data.token)
-
-                    ForumApiService.setJWTToken(response.data.data.token)
+                    UserService.doLogin(response.data.data, ForumApiService)
 
                     $scope.closeCurrentModal()
 
@@ -334,9 +372,18 @@ var forumController = app.controller(
                 } else {
                     console.log('Login Failed: ' + response.data.data.msg)
 
-                    $scope.loginErrorMsg = response.data.data.msg
+                    $scope.loginErrorMsg = response.data.data.msg || 'Errore Login Sconosciuto'
                 }
             })
+    }
+
+    $scope.getExpRemainingHours = function() {
+        const expDate = new Date(parseInt(UserService.getUserAndToken().exp))
+        const today = Date.now()
+
+        const differenceInHours = Math.abs(expDate - today) / 36e5
+
+        return Math.round(differenceInHours).toString()
     }
 
     forum.registerNewUser = function(newUser) {
@@ -397,7 +444,7 @@ var forumController = app.controller(
     }
 
     forum.doLogout = function() {
-        console.log('Asking login for user: ', $scope.current_user)
+        console.log('Asking logout for user: ', $scope.current_user)
 
         UserService.deleteUser()
 
@@ -407,6 +454,14 @@ var forumController = app.controller(
         $scope._isLogged = false
     }
 
+    $scope.loadSearchResults = function(data) {
+        $scope.topics = data
+
+        $scope.is_search = true
+
+        $scope.reOrderTopics()
+    }
+
     $scope.searchTopics = function(query) {
         console.log('Searching: ', query)
 
@@ -414,14 +469,38 @@ var forumController = app.controller(
             .then(res => {
                 console.log('Topics Search Result: ', res)
 
-                $scope.topics = res.data
-
-                $scope.reOrderTopics()
+                $scope.loadSearchResults(res.data)
             })
             .catch(err => console.log(err))
     }
 
-    $scope.$watch('searchDate', function (value) {
+    $scope.doSearchDate = function($el) {
+        $scope.search_date = $el.search_date
+
+        console.log('doSearchDate Triggered')
+        console.log('$scope.search_date', $scope.search_date)
+
+        ForumApiService.searchTopics($scope.search_date)
+            .then(res => {
+                console.log('Topics SearchByDate Result: ', res)
+
+                $scope.loadSearchResults(res.data)
+            })
+            .catch(err => console.log(err))
+        
+        // alert($scope.search_date)
+    }
+
+    $scope.doCancelSearch = function() {
+        console.log('Cancelling Search')
+
+        $scope.is_search = false
+        $scope.search_date = ''
+
+        $scope.loadTopics()
+    }
+
+    /*$scope.$watch('searchDate', function (value) {
         let liveDate = null
 
         try {
@@ -447,7 +526,7 @@ var forumController = app.controller(
             })
             .catch(err => console.log(err))
         }
-    })
+    })*/
 
     $scope.loadForum = function($event, $index, _forum) {
         console.log('loadForum $index: ', $index)
@@ -475,18 +554,22 @@ var forumController = app.controller(
         return result;
     }
 
-    $scope.reOrderTopics = function(topics) {
-        if($scope.topics.length > 0){
+    $scope.reOrderTopics = function() {
+        // if($scope.topics.length > 0){
             $scope.sortAll($scope.topics)
 
             $scope.topics = $scope.flat($scope.topics)
-        }
+        // } else {
+            // console.log('NO TOPICS !!!')
+        // }
     }
 
     $scope.loadTopics = function() {
 
         ForumApiService.getTopicsByForum($scope.currentForum._id)
             .then(response => {
+                console.log('getTopicsByForum response', response)
+
                 $scope.topics = response.data
                 // $scope.topics = $scope.rebuildTopics(response.data)
 
@@ -498,16 +581,20 @@ var forumController = app.controller(
     
     // Do Onload Things...
     $scope.onload = function() {
+        console.log('$scope.onload triggered')
+
         ForumApiService.getForums()
             .then(response => {
                 $scope.forumList = response.data
                 // sortDescByOrder($scope.forumList)
 
+                console.log('Forum List: ', $scope.forumList)
+
                 $scope.currentForum = $scope.forumList[0]
                 console.log('Current Forum is: ', $scope.currentForum)
-
-                $scope.loadTopics()
             })
+            .then(x => $scope.loadTopics())
+            .catch(err => console.log(err))
     }
 
     $scope.isAdmin = function() {

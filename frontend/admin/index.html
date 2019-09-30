@@ -93,6 +93,27 @@
             cursor: pointer;
         }
 
+        .arrow-down:after,.arrow-up:after{
+            content: ' ';
+            position: relative;
+            left: 2px;
+            border: 8px solid transparent;
+        }
+
+        .arrow-down:after{
+            top: 10px;
+            border-top-color: silver;
+        }
+
+        .arrow-up:after{
+            bottom: 15px;
+            border-bottom-color: silver;
+        }
+
+        .arrow-down,.arrow-up{
+            padding-right: 10px;
+        }
+
     </style>
 </head>
 <body ng-app="adminApp" ng-controller="AdminController as admin" style="background-color: white;">
@@ -147,18 +168,33 @@
                 </div>
             </div>
             <script type="text/ng-template" id="dataTable">
-                <table class="table data-table">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th ng-repeat="header in dataHeaders track by $index" scope="col">{{header}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="d in data" ng-mouseover="ishover = true" ng-mouseleave="ishover = false" ng-class="{'bg-primary': ishover}">
-                            <td ng-repeat="(key, value) in d">{{value}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table data-table">
+                        <thead class="thead-dark">
+                            <tr style="cursor: pointer;">
+                                <th scope="col">
+                                    <input type="checkbox" name="dataRow" id="data-row-checkbox-head" ng-click="selectAllRows()">
+                                    <button type="button" class="btn btn-outline-primary btn-sm">Add</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm">
+                                        <span ng-if="selectedRows.length > 0">Delete {{selectedRows.length}}</span>
+                                        <span ng-if="selectedRows.length == 0">Delete</span>
+                                    </button>
+                                </th>
+                                <th ng-repeat="header in dataHeaders track by $index" scope="col" ng-class="sortClass(header)" ng-click="sortColumn(header)">{{header}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="d in data | orderBy:column:reverse track by $index" ng-mouseover="ishover = true" ng-mouseleave="ishover = false" ng-class="{'table-info': ishover, 'table-secondary': isRowSelected(d)}" ng-click="selectRow(d, this)">
+                                <td>
+                                    <input type="checkbox" name="dataRow" id="data-row-checkbox-{{$index}}" ng-checked="isRowSelected(d)">
+                                    <button type="button" class="btn btn-outline-primary btn-sm">Modify</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm">X</button>
+                                </td>
+                                <td ng-repeat="(key, value) in d">{{value}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </script>
             <!-- Left Sidebar Content -->
             <div class="col-9" style="padding: 0; background-color: white; margin: 0 auto;">

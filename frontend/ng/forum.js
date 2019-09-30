@@ -14,8 +14,22 @@ angular.module('forumApiService', [])
         $http.defaults.headers.common.Authorization = '';
     }
 
-    api.getTopics = function() {
-        return $http.get(api.endpoint + '/topics')
+    api.getTopics = function(opts={}) {
+        let querystring = ''
+
+        if('noLevel' in opts) {
+            querystring += 'noLevel=' + opts.noLevel.toString() + '&'
+        }
+
+        if('level' in opts) {
+            querystring += 'level' + opts.level + '&'
+        }
+
+        if(querystring !== '') {
+            return $http.get(api.endpoint + '/topics?' + querystring)
+        } else {
+            return $http.get(api.endpoint + '/topics')
+        }
     }
 
     api.getTopicsByForum = function(forum_id) {

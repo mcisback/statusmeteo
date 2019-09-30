@@ -127,7 +127,15 @@ app.get(api_endpoint + '/forums', function (req, res) {
 
 // Get all topics
 app.get(api_endpoint + '/topics', function (req, res) {
-    models.Topic.find({level: 1}, function(err, data) {
+    let level = req.query.level || 1
+    let noLevel = req.query.noLevel || 'false'
+    let mongoquery = {}
+
+    if(noLevel !== 'true') {
+        mongoquery = {level: level}
+    }
+
+    models.Topic.find(mongoquery, function(err, data) {
         console.log('GET topics: ', err, data, data.length)
 
         res.json(data)
@@ -174,7 +182,7 @@ app.get(api_endpoint + '/topics/searchbydate/:date', function (req, res) {
     console.log(`SEARCH TopicsByDate with date: ${req.params.date}`)
     
     models.Topic.find({
-        createdAt: {$gte: req.params.date}
+        createdAt: {$gte: new Date(req.params.date)}
     }, function(err, data) {
         console.log('SEARCH TopicsByDate: ', err, data, req.params.query, data.length)
 
@@ -446,9 +454,15 @@ app.post(api_endpoint + '/login', function (req, res) {
                 console.log('Found User: ', user)
 
                 if(bcrypt.compareSync(req.body.password, user.password)) {
-                    const token = jwt.sign({id: user._id, user: user}, config[env].secretKey, { expiresIn: '3h' });
+                    var expTime = new Date()
+
+                    expTime.setTime(expTime.getTime() + (60 * 60 * 24 * 1000))
+
+                    console.log('LOGIN Setting Exp time to: ', expTime)
+
+                    const token = jwt.sign({id: user._id, user: user}, config[env].secretKey, { expiresIn: '24h' });
                     
-                    res.json({success: true, data: {msg: "user found!!!", user: user, token: token}});
+                    res.json({success: true, data: {msg: "user found!!!", user: user, token: token, exptime: expTime.getTime()}});
                 } else {
                     res.json({success: false, data: {msg: "Invalid email/password!!!"}});
                 }
