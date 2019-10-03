@@ -412,6 +412,23 @@ app.delete(api_endpoint + '/user/delete/:userId', checkToken, checkIfUserIsAdmin
     })
 })
 
+// Delete users (for user or admin)
+app.post(api_endpoint + '/user/deletemany/', checkToken, checkIfUserIsAdmin, function (req, res) {
+    let _ids = req.body.map(item => mongoose.Types.ObjectId(item))
+
+    console.log('\nDeleting Many Users: ', req.body, _ids)
+
+    try {
+        models.User.remove({'_id': {'$in': _ids}})
+    } catch(err) {
+        console.log('DeleteManyUsers Catched an Error: ', err)
+        
+        res.json({success: false, data: {msg: err}})
+    }
+
+    res.json({success: true, data: {msg: 'Users Deleted'}})
+})
+
 // Modify user (for user or admin)
 app.put(api_endpoint + '/user/edit/:userId', checkToken, checkAndSetAdmin, function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})

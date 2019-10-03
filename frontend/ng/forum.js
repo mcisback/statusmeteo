@@ -98,6 +98,18 @@ angular.module('forumApiService', [])
         return $http.get(api.endpoint + '/users')
     }
 
+    api.deleteUser = function(_id, user) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.delete(api.endpoint + '/user/delete/' + _id)
+    }
+
+    api.deleteManyUsers = function(_ids) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.post(api.endpoint + '/user/deletemany/', JSON.stringify(_ids))
+    }
+
     api.getFieldsType = function(collection) {
         return $http.get(api.endpoint + '/getfields/' + collection)
     }

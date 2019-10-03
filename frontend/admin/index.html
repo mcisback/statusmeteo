@@ -122,7 +122,7 @@
 
         <header class="container-fluid">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="background-color: transparent !important;">
-                <a class="navbar-brand" href="#">StatusMeteo</a>
+                <a class="navbar-brand" href="/">StatusMeteo</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
                 </button>
@@ -133,8 +133,8 @@
                       <a class="nav-link" href="#">Admin Area</a>
                     </li>
                     <li class="nav-item">
-                            <a class="nav-link" href="/">Forum</a>
-                          </li>
+                        <a class="nav-link" href="/">Forum</a>
+                    </li>
                     <li class="nav-item dropdown" ng-if="isLogged()">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Benvenuto {{current_user.username}}
@@ -142,6 +142,9 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="#" ng-click="doLogout()">Logout</a>
                         </div>
+                    </li>
+                    <li class="nav-item" ng-if="isLogged()">
+                        <a class="nav-link" href="#" style="color: white;">Login Scade In {{getExpRemainingHours()}}h</a>
                     </li>
                   </ul>
                   <!-- <form class="form-inline my-2 my-lg-0">
@@ -174,9 +177,9 @@
                             <tr style="cursor: pointer;">
                                 <th scope="col">
                                     <input type="checkbox" name="dataRow" id="data-row-checkbox-head" ng-click="selectAllRows()">
-                                    <button type="button" class="btn btn-outline-primary btn-sm">Add</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" ng-click="openDataModal('add', {})">Add</button>
                                     <button type="button" class="btn btn-outline-primary btn-sm">
-                                        <span ng-if="selectedRows.length > 0">Delete {{selectedRows.length}}</span>
+                                        <span ng-if="selectedRows.length > 0" ng-click="doDeleteCallback()">Delete {{selectedRows.length}}</span>
                                         <span ng-if="selectedRows.length == 0">Delete</span>
                                     </button>
                                 </th>
@@ -184,13 +187,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="d in data | orderBy:column:reverse track by $index" ng-mouseover="ishover = true" ng-mouseleave="ishover = false" ng-class="{'table-info': ishover, 'table-secondary': isRowSelected(d)}" ng-click="selectRow(d, this)">
+                            <tr ng-repeat="d in data | orderBy:column:reverse track by $index" ng-mouseover="ishover = true" ng-mouseleave="ishover = false" ng-class="{'table-info': ishover, 'table-secondary': isRowSelected(d)}">
                                 <td>
                                     <input type="checkbox" name="dataRow" id="data-row-checkbox-{{$index}}" ng-checked="isRowSelected(d)">
-                                    <button type="button" class="btn btn-outline-primary btn-sm">Modify</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" ng-click="openDataModal('edit', d)">Modify</button>
                                     <button type="button" class="btn btn-outline-primary btn-sm">X</button>
                                 </td>
-                                <td ng-repeat="(key, value) in d">{{value}}</td>
+                                <td ng-repeat="(key, value) in d" ng-click="selectRow(d, this)">{{value}}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -221,16 +224,79 @@
 
     </div>
 
-    <div ng-if="!(isLogged() && isAdmin())">
-        <div class="jumbotron jumbotron-fluid" style="margin-bottom: 0; padding-bottom: 8px; padding-top: 8px; text-align: center;">
-            <div class="container">
-                <h1 class="display-4">Error!</h1>
-                <p class="lead">
-                    You must be logged in and admin to see this page !
-                </p>
+    <div ng-if="!(isLogged() && isAdmin())" style="width: 100%;">
+        <div class="container-fluid" style="display: flex; background-color: #e9ecef; margin-bottom: 0; padding-bottom: 8px; padding-top: 8px; width: 100%; margin: 0 auto;">
+            <div class="container-fluid" style="display: flex; flex-flow: row; width: 50%;">
+                <div class="container-fluid" style="width: 30%;">
+                    <h1 class="display-4">Error!</h1>
+                    <p class="lead">
+                        You must be logged in and admin to see this page !
+                        <br>
+                        <br>
+                        Go to <a class="nav-link" href="/">Login</a>
+                    </p>
+                </div>
+                <div class="container-fluid mx-auto" style="width: 20%; height: 100%; margin-top: 15%;">
+                    <h1 class="display-4">OR</h1>
+                </div>
+                <div class="container-fluid mx-auto" style="width: 60%">
+                    <h1>Login</h1>
+
+                    <p class="alert alert-danger" ng-if="loginErrorMsg">
+                        {{loginErrorMsg}}
+                    </p>
+
+                    <p>
+                        Username: <input type="text" name="topic" class="form-control" ng-model="newUser.login" my-enter="login(newUser);" />
+                        <br>
+                        Password: <input type="text" name="subject" class="form-control" ng-model="newUser.password" my-enter="login(newUser);" />
+                    </p>
+
+                    <br>
+
+                    <button ng-click="login(newUser);" class="btn btn-primary">Login</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <modal id="data-editor-modal">
+        <div class="modal" ng-if="isLogged()">
+            <div class="modal-body">
+                <h1>{{modalData.title}}</h1>
+                <p class="alert alert-danger" ng-if="modalErrorMsg">
+                    {{modalErrorMsg}}
+                </p>
+                <p class="alert alert-success" ng-if="modalSuccessMsg">
+                    {{modalSuccessMsg}}
+                </p>
+                <div>
+                    <div ng-repeat="field in modalData.fields track by $index" ng-if="key != undefined || key != 'updatedAt' || key != 'createdAt' || key != '_id'">
+                        <div ng-if="field.type == 'string' && field.key != 'password'">
+                            {{field.key}}: <input type="text" name="{{field.key}}" dynamic-model="'modalData.data.' + field.key" class="form-control" />
+                        </div>
+                        <div ng-if="field.type == 'boolean'">
+                            {{field.key}}: <input type="checkbox" name="{{field.key}}" dynamic-model="'modalData.data.' + field.key" class="form-control" />
+                        </div>
+                        <div ng-if="field.type == 'number'">
+                            {{field.key}}: <input type="number" name="{{field.key}}" dynamic-model="'modalData.data.' + field.key" class="form-control" step="1" />
+                        </div>
+                        <div ng-if="field.key == 'password'">
+                            {{field.key}}: <input type="password" name="{{field.key}}" dynamic-model="'modalData.data.' + field.key" class="form-control" />
+                        </div>
+                        <br>
+                    </div>
+                </div>
+
+                <br>
+
+                <button ng-click="modalSaveAction(modalData)" class="btn btn-primary">{{modalData.action | capitalize}}</button>
+                <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
+            </div>
+        </div>
+        <div class="modal-background"></div>
+    </modal>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -244,6 +310,7 @@
     <script src="/ng/forum.js"></script>
     <script src="/ng/modal.js"></script>
     <script src="/ng/user.js"></script>
+    <script src="/ng/ckeditor-ng.js"></script>
     <script src="admin_app.js"></script>
 
 </body>

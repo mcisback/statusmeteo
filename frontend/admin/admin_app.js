@@ -1,8 +1,29 @@
 var app = angular.module('adminApp', [
     'forumApiService',
     'modalService',
-    'userService'
+    'userService',
+    'ckeditorDirective'
 ])
+
+app.directive('dynamicModel', ['$compile', '$parse', function ($compile, $parse) {
+    return {
+        restrict: 'A',
+        terminal: true,
+        priority: 100000,
+        link: function (scope, elem) {
+            var name = $parse(elem.attr('dynamic-model'))(scope);
+            elem.removeAttr('dynamic-model');
+            elem.attr('ng-model', name);
+            $compile(elem)(scope);
+        }
+    };
+}]);
+
+app.filter('capitalize', function() {
+    return function(input) {
+      return (angular.isString(input) && input.length > 0) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : input;
+    }
+});
 
 var adminController = app.controller(
     'AdminController',
@@ -20,6 +41,7 @@ var adminController = app.controller(
         $scope.ishover = false
         $scope.selectedRows = []
         $scope.data = []
+        $scope.newUser = {}
 
         $scope.leftNavMenu = []
 
@@ -60,9 +82,24 @@ var adminController = app.controller(
             console.log('$scope.onload admin_app.js')
 
             $scope.leftNavMenu = [
-                {text: 'Users', active: true, action: () => {adminCtrl.getUsers()}},
-                {text: 'Forums', active: false, action: () => {adminCtrl.getForums()}},
-                {text: 'Topics', active: false, action: () => {adminCtrl.getTopics()}}
+                {
+                    text: 'Users',
+                    active: true,
+                    action: () => {adminCtrl.getUsers()},
+                    deleteCallback: (_ids) => {
+                        return ForumApiService.deleteManyUsers(_ids)
+                    }
+                },
+                {
+                    text: 'Forums',
+                    active: false,
+                    action: () => {adminCtrl.getForums()}
+                },
+                {
+                    text: 'Topics',
+                    active: false,
+                    action: () => {adminCtrl.getTopics()}
+                }
             ]
 
             console.log('$scope.leftNavMenu: ', $scope.leftNavMenu)
@@ -77,11 +114,28 @@ var adminController = app.controller(
             }
 
             console.log('$scope.selectedRows: ', $scope.selectedRows)*/
+        }
 
-            ForumApiService.getFieldsType('users')
-                .then(res => res.data)
-                .then(data => console.log(data))
-                .catch(err => console.log(err))
+        $scope.reloadNav = function() {
+            $scope.navTo($scope.current_nav)
+        }
+
+        $scope.doDeleteCallback = function() {
+            console.log('Calling DELETE Callback on: ', $scope.leftNavMenu[$scope.current_nav])
+
+            console.log('Deleting: ', $scope.selectedRows.map(item => item._id))
+
+            $scope.leftNavMenu[$scope.current_nav].deleteCallback(
+                $scope.selectedRows.map(item => item._id)
+            )
+                .then(res => {
+                    console.log('DELETE Callback res: ', res)
+
+                    // $scope.reloadNav()
+                })
+                .catch(err => {
+                    console.log('DELETE Callback err: ', err)
+                })
         }
 
         $scope.isLogged = function() {
@@ -116,6 +170,15 @@ var adminController = app.controller(
 
             return false
         }
+
+        $scope.getExpRemainingHours = function() {
+            const expDate = new Date(parseInt(UserService.getUserAndToken().exp))
+            const today = Date.now()
+    
+            const differenceInHours = Math.abs(expDate - today) / 36e5
+    
+            return Math.round(differenceInHours).toString()
+        }    
 
         $scope.isAdmin = function() {
             return $scope.current_user.is_admin
@@ -152,19 +215,32 @@ var adminController = app.controller(
             $scope._isLogged = false
         }
 
-        $scope.openModal = function(id){
-            $scope.current_modal = id
-
-            ModalService.Open(id)
+        $scope.openModal = function(id, checkIfLogged=false){
+            if(checkIfLogged) {
+                if(!$scope.isLogged()) {
+                    $scope.current_modal = 'login-modal'
+                } else {
+                    $scope.current_modal = id
+                }
+            } else {
+                $scope.current_modal = id
+            }
+    
+            console.log('openModal current_modal is: ', $scope.current_modal)
+            console.log('ModalData is: ', $scope.modalData)
+    
+            ModalService.Open($scope.current_modal)
         }
-
+    
         $scope.closeModal = function(id){
             $scope.current_modal = ''
-
+    
             ModalService.Close(id)
         }
-
+    
         $scope.closeCurrentModal = function(){
+            console.log('closeCurrentModal is: ',  $scope.current_modal)
+    
             $scope.closeModal($scope.current_modal)
         }
 
@@ -189,13 +265,106 @@ var adminController = app.controller(
             return $scope.selectedRows.includes(row)
         }
 
-        adminCtrl.setData = function(data) {
+        $scope.login = function(user) {
+            console.log('Asking login for user: ', user)
+    
+            ForumApiService.login(user)
+                .then(response => {
+                    console.log('Login Response: ', response)
+    
+                    if(response.data.success == true) {
+                        console.log('Login Success !!!')
+    
+                        alert('Login Success !!!')
+    
+                        // $scope.loginSuccessMsg = 'Login Success !!!'
+    
+                        // $window.localstorage
+    
+                        UserService.doLogin(response.data.data, ForumApiService)
+    
+                        // $scope.closeCurrentModal()
+    
+                        /*$scope.current_user = response.data.data.user
+                        $scope.jwt_token = response.data.data.token
+    
+                        $scope._isLogged = true*/
+                    } else {
+                        console.log('Login Failed: ' + response.data.data.msg)
+    
+                        $scope.loginErrorMsg = response.data.data.msg || 'Errore Login Sconosciuto'
+                    }
+                })
+        }
+
+        $scope.openDataModal = function(action, _data) {
+            $scope.modalData = {
+                title: 'Data Editor',
+                headers: $scope.dataHeaders,
+                fields: $scope.dataFields,
+                data: _data,
+                action: action
+            }
+
+            $scope.modalErrorMsg = ''
+            $scope.modalSuccessMsg = ''
+
+            $scope.openModal('data-editor-modal')
+        }
+
+        adminCtrl.setData = function(data, fields) {
+
+            console.log('setData fields: ', fields)
 
             $scope.data = data.map(item => {delete item['__v']; return item; })
+            // $scope.dataHeaders = Object.keys(data[0])
             $scope.dataHeaders = Object.keys(data[0])
+            $scope.dataFields = fields.map(item => {
+                console.log(item)
+                if(item.key == '__v'){
+                    delete item;
+                } else {
+                    return item
+                }
+            })
 
             console.log('$scope.data: ', $scope.data)
             console.log('$scope.dataHeaders: ', $scope.dataHeaders)
+            console.log('$scope.dataFields: ', $scope.dataFields)
+        }
+
+        $scope.modalSaveAction = function(data) {
+            console.log('Modal Input Data: ', data)
+
+            if(data.action == 'add') {
+                if($scope.leftNavMenu[$scope.current_nav].text.toLowerCase() == 'users') {
+                    console.log('Adding New User: ', data.data)
+
+                    ForumApiService.registerNewUser(data.data)
+                        .then(res => {
+                            console.log('regiterNew User Received 200 response', res)
+
+                            $scope.modalSuccessMsg = 'New User Created'
+
+                            $scope.reloadNav()
+                        })
+                        .catch(err => {
+                            console.log('Register New User Catch Error: ', err)
+
+                            $scope.modalErrorMsg = err
+                        })
+                }
+            } else if(data.action == 'edit') {
+                if($scope.leftNavMenu[$scope.current_nav].text.toLowerCase() == 'users') {
+                    console.log('Editing User: ', data.data)
+
+                    // TODO
+                }
+            } else {
+                alert('ERROR: Unknown modal action')
+
+                throw new Error('Uknown modal action')
+            }
         }
 
         adminCtrl.getUsers = function() {
@@ -204,7 +373,14 @@ var adminController = app.controller(
                 .then(data => {
                     console.log('getUsers: ', data)
 
-                    adminCtrl.setData(data)
+                    ForumApiService.getFieldsType('users')
+                        .then(res => res.data.data.data)
+                        .then(fields => {
+                            console.log('Users Fields: ', fields)
+
+                            adminCtrl.setData(data, fields)
+                        })
+                        .catch(err => console.log('Fields Error: ', err))
                 })
                 .catch(err => console.log(err))
         }
@@ -215,7 +391,14 @@ var adminController = app.controller(
                 .then(data => {
                     console.log('getForums: ', data)
 
-                    adminCtrl.setData(data)
+                    ForumApiService.getFieldsType('forums')
+                        .then(res => res.data.data.data)
+                        .then(fields => {
+                            console.log('Forums Fields: ', fields)
+
+                            adminCtrl.setData(data, fields)
+                        })
+                        .catch(err => console.log('Fields Error: ', err))
                 })
                 .catch(err => console.log(err))
         }
@@ -228,7 +411,14 @@ var adminController = app.controller(
                 .then(data => {
                     console.log('getTopics: ', data)
 
-                    adminCtrl.setData(data)
+                    ForumApiService.getFieldsType('topics')
+                        .then(res => res.data.data.data)
+                        .then(fields => {
+                            console.log('Topics Fields: ', fields)
+
+                            adminCtrl.setData(data, fields)
+                        })
+                        .catch(err => console.log('Fields Error: ', err))
                 })
                 .catch(err => console.log(err))
         }

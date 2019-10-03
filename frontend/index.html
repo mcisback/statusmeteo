@@ -280,7 +280,9 @@
                         <td style="width: 60%; cursor: pointer;" ng-click="showTopicText($event, topic)">
                             <div style="width: 100%; margin-left: {{topic.level}}rem">
                                 <img src="assets/N_thrnew.gif" alt="Topic" ng-if="topic.level == 1">
-                                <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="border-left: thin dotted black; border-bottom: thin dotted black;">
+                                <img src="assets/L.gif" alt="L" ng-if="topic.level > 1">
+                                <!-- style="border-left: thin dotted black; border-bottom: thin dotted black;" -->
+                                <img src="assets/N_ThrAns.gif" alt="SubTopic" ng-if="topic.level > 1" style="margin-left: -5px;">
                                 <span class="topic-title">{{topic.title}}</span>
                                 <br>
                                 <span class="topic-subtitle">{{topic.subtitle}}</span>
@@ -366,41 +368,41 @@
         </modal>
 
         <modal id="add-topic-editor-modal">
-                <div class="modal" ng-if="isLogged()">
-                    <div class="modal-body">
-                        <h1>Add Topic</h1>
-                        <p class="alert alert-danger" ng-if="addTopicError">
-                            {{addTopicError}}
-                        </p>
-                        <p class="alert alert-success" ng-if="addTopicSuccess">
-                            {{addTopicSuccess}}
-                        </p>
-                        <p>
-                            Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
-                            <br>
-                            Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
-                        </p>
-    
-                        <textarea ng-model="forum.topic.text" id="ckeditor-add-topic" ckeditor></textarea>
-    
+            <div class="modal" ng-if="isLogged()">
+                <div class="modal-body">
+                    <h1>Add Topic</h1>
+                    <p class="alert alert-danger" ng-if="addTopicError">
+                        {{addTopicError}}
+                    </p>
+                    <p class="alert alert-success" ng-if="addTopicSuccess">
+                        {{addTopicSuccess}}
+                    </p>
+                    <p>
+                        Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
-    
-                        <button ng-click="forum.addTopicSameLevel(current_topic, forum.topic);" class="btn btn-primary">Save</button>
-                        <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
-                    </div>
+                        Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
+                    </p>
+
+                    <textarea ng-model="forum.topic.text" id="ckeditor-add-topic" ckeditor></textarea>
+
+                    <br>
+
+                    <button ng-click="forum.addTopicSameLevel(current_topic, forum.topic);" class="btn btn-primary">Save</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
-                <div class="modal" ng-if="!isLogged()">
-                    <div class="modal-body">
-                        <h1>Errore</h1>
-                        Devi fare il login per procedere
-    
-                        <br>
-    
-                        <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
-                    </div>
+            </div>
+            <div class="modal" ng-if="!isLogged()">
+                <div class="modal-body">
+                    <h1>Errore</h1>
+                    Devi fare il login per procedere
+
+                    <br>
+
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
                 </div>
-                <div class="modal-background"></div>
-            </modal>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
 
         <modal id="reply-topic-editor-modal">
             <div class="modal">
@@ -550,6 +552,7 @@
     <script src="/ng/forum.js"></script>
     <script src="/ng/modal.js"></script>
     <script src="/ng/user.js"></script>
+    <script src="/ng/ckeditor-ng.js"></script>
     <script src="app.js"></script>
 
 </body>
