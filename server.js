@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken')
 const path = require('path')
 
 const config = require('./config')
-const env = 'dev' || process.env.NODE_ENV
+const env = process.env.NODE_ENV || 'dev'
 
 console.log('Using ENV: ', env)
 
