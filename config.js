@@ -9,7 +9,7 @@ module.exports = {
     },
     prod: {
         host: 'localhost',
-        appUrl: 'http://statusmeteo.marcocaggiano.com',
+        appUrl: 'https://statusmeteo.marcocaggiano.com',
         port: 8082,
         publicDir: '/frontend',
         databaseUrl: 'mongodb://localhost:27017/statusmeteo',
