@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors')
 const app = express()
 
+const fs = require('fs') // filesystem module
+
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 // const cookieParser = require("cookie-parser");
@@ -39,14 +41,45 @@ const connectDb = () => {
 // Enable Cors
 app.use(cors())
 
-// Use publicDir for static files
-app.use(express.static(__dirname + config[env].publicDir));
-app.use('/scripts', express.static(__dirname + '/node_modules'))
-app.use('/ng', express.static(__dirname + config[env].publicDir + '/ng'))
+// Log Requested Files
+/*app.use(function (req, res, next) {
+    var filename = path.basename(req.url)
+    // var extension = path.extname(filename)
+
+    console.log("The file " + filename + " was requested.")
+
+    next()
+})*/
+
+// EJS Engine
+// app.engine('html', require('ejs').renderFile)
+// app.engine('js', require('ejs').renderFile)
+// app.set('views', __dirname + config[env].publicDir)
+// app.set('view engine', 'ejs')
 
 // Read Post JSON Body
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Use publicDir for static files
+app.use(express.static(__dirname + config[env].publicDir))
+
+// Static routes
+app.use('/scripts', express.static(__dirname + '/node_modules'))
+
+// Generate Client Configuration based on server configuration :)
+app.get('/ng/client-config.js', (req, res, next) => {
+    res.send(`
+        angular.module('globalConfigModule', [])
+        .constant('GlobalConfig', {
+            appName: 'StatusMeteo',
+            appVersion: 2.0,
+            check: 'oh yes',
+            appUrl: '${config[env].appUrl}'
+        })
+    `)
+})
+app.use('/ng', express.static(__dirname + config[env].publicDir + '/ng'))
 
 const checkToken = (req, res, next) => {
     console.log('checkToken headers: ', req.headers)
@@ -110,10 +143,28 @@ const checkAndSetAdmin = (req, res, next) => {
 }
 
 // Serve Static Files and JS App
+// This appears to never be called
 app.get('/', function(req, res) {
-    console.log('Serving Frontend on ', publicDir)
+    console.log('Serving Frontend on ', config[env].publicDir)
 
-    res.sendFile('index.html')
+    // res.send('An alligator approaches!')
+
+    /*fs.readFile('index.html', function (err, content) {
+        if (err) {
+            console.log('GET / readFile error: ', err)
+        } else {
+            // this is an extremely simple template engine
+            var rendered = content.toString()
+                .replace('##=appDomain##', config[env].appDomain)
+
+            console.log('rendered: ', rendered)
+
+            res.render(rendered)
+        }
+    })*/
+
+    // res.sendFile('index.html')
+    res.render('index.html')
 })
 
 // Get all forums

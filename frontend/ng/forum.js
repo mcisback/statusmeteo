@@ -1,8 +1,11 @@
-angular.module('forumApiService', [])
-.service('ForumApiService', function($http) {
+angular.module('forumApiService', [
+    'globalConfigModule'
+])
+.service('ForumApiService', ['$http', 'GlobalConfig', function($http, GlobalConfig) {
     api = {}
 
-    api.endpoint = "http://localhost:8082/api"
+    //api.endpoint = "http://localhost:8082/api"
+    api.endpoint = GlobalConfig.appUrl + '/api'
 
     api.setJWTToken = function(jwt_token) {
         // $http.defaults.headers.Authorization = 'Bearer ' + jwt_token;
@@ -115,4 +118,4 @@ angular.module('forumApiService', [])
     }
 
     return api
-})
+}])

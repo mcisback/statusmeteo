@@ -1,4 +1,5 @@
 var app = angular.module('adminApp', [
+    'globalConfigModule',
     'forumApiService',
     'modalService',
     'userService',
@@ -27,8 +28,8 @@ app.filter('capitalize', function() {
 
 var adminController = app.controller(
     'AdminController',
-    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', 
-    function($scope, $window, UserService, ModalService, ForumApiService) {
+    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', 'GlobalConfig', 
+    function($scope, $window, UserService, ModalService, ForumApiService, GlobalConfig) {
         var adminCtrl = this
 
         $scope._isLogged = false
@@ -80,6 +81,7 @@ var adminController = app.controller(
         // Do Onload Things...
         $scope.onload = function() {
             console.log('$scope.onload admin_app.js')
+            console.log('GlobalConfig is: ', GlobalConfig)
 
             $scope.leftNavMenu = [
                 {

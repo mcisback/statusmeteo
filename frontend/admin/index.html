@@ -116,7 +116,7 @@
 
     </style>
 </head>
-<body ng-app="adminApp" ng-controller="AdminController as admin" style="background-color: white;">
+<body ng-app="adminApp" ng-controller="AdminController as admin" style="background-color: white;" ng-cloak>
     
     <div id="mainWrapper" class="container-fluid" ng-init="onload()" ng-if="isLogged() && isAdmin()">
 
@@ -307,6 +307,7 @@
 
     <script src="https://cdn.ckeditor.com/4.12.1/standard/ckeditor.js"></script>
 
+    <script src="/ng/client-config.js"></script>
     <script src="/ng/forum.js"></script>
     <script src="/ng/modal.js"></script>
     <script src="/ng/user.js"></script>

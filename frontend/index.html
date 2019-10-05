@@ -129,7 +129,7 @@
 
     </style>
 </head>
-<body ng-app="forumApp">
+<body ng-app="forumApp" ng-cloak>
     
     <div id="mainWrapper" class="container-fluid" ng-controller="ForumController as forum" ng-init="onload()">
 
@@ -549,6 +549,7 @@
 
     <script src="/scripts/angularjs-datepicker/dist/angular-datepicker.min.js"></script>
 
+    <script src="/ng/client-config.js"></script>
     <script src="/ng/forum.js"></script>
     <script src="/ng/modal.js"></script>
     <script src="/ng/user.js"></script>

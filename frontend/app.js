@@ -41,6 +41,7 @@ const sortDescByMaxTm = (a, b) => {
 
 var app = angular.module('forumApp', [
     '720kb.datepicker',
+    'globalConfigModule',
     'forumApiService',
     'modalService',
     'userService',
@@ -98,7 +99,8 @@ app.filter('formatDate', function () {
 
 var forumController = app.controller(
     'ForumController',
-    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', function($scope, $window, UserService, ModalService, ForumApiService) {
+    ['$scope', '$window', 'UserService', 'ModalService', 'ForumApiService', 'GlobalConfig',
+    function($scope, $window, UserService, ModalService, ForumApiService, GlobalConfig) {
     var forum = this;
 
     console.log('$scope: ', $scope)
@@ -533,6 +535,7 @@ var forumController = app.controller(
     // Do Onload Things...
     $scope.onload = function() {
         console.log('$scope.onload triggered')
+        console.log('GlobalConfig is: ', GlobalConfig)
 
         ForumApiService.getForums()
             .then(response => {
