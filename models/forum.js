@@ -34,6 +34,12 @@ const forumSchema = new mongoose.Schema({
         unique: false,
         required: true,
         default: false
+    },
+    forum_type: {
+        type: String,
+        unique: false,
+        required: false,
+        default: 'Discussion'
     }
 }, {timestamps: true});
 
