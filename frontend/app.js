@@ -135,6 +135,7 @@ var forumController = app.controller(
     $scope.current_page = 0
     $scope.current_topic = {}
     $scope.current_modal = ''
+    $scope.is_search = false
     $scope.search_date = ''
 
     $scope.isLogged = function() {
@@ -536,6 +537,7 @@ var forumController = app.controller(
     $scope.onload = function() {
         console.log('$scope.onload triggered')
         console.log('GlobalConfig is: ', GlobalConfig)
+        console.log('$scope.is_search: ',$scope.is_search)
 
         ForumApiService.getForums()
             .then(response => {
@@ -548,6 +550,7 @@ var forumController = app.controller(
                 console.log('Current Forum is: ', $scope.currentForum)
             })
             .then(x => $scope.loadTopics())
+            .then(x => $scope.is_search = false)
             .catch(err => console.log(err))
     }
 
