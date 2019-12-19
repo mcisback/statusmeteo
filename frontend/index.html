@@ -288,8 +288,8 @@
                         <div class="cell">
                             <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image" ng-click="loadTopics()">
                         </div>
-                        <div class="cell Fix"><b>&nbsp;Search&nbsp;</b></div>
                         <div class="cell">
+                            <span class="Fix"><b>&nbsp;Search&nbsp;</b></span>
                             <input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text" searchtopics>
                         </div>
                         <div class="cell Fix"><b>&nbsp;Data&nbsp;</b></div>
@@ -317,8 +317,10 @@
                                 <div class="rounded-circle" style="background-color: white; color: darkgrey; font-family: Arial, sans-serif; width: 1rem; height: 1rem; display: inline-block; line-height: 1rem;">X</div> Cancella Ricerca
                             </div>
                         </div>
-                        <div class="cell Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></div>
-                        <div class="cell"><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text" ng-model="current_page"></div>
+                        <div class="cell">
+                            <span class="Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></span>
+                            <input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text" ng-model="current_page">
+                        </div>
                         <div class="cell" align="left"><img src="assets/Blu_Prev.gif" title="Pagina precedente" type="image" ng-click="forum.goToPreviousPage()"></div>
                         <div class="cell" align="right"><img src="assets/Blu_Next.gif" title="Pagina successiva" type="image" ng-click="forum.goToNextPage()"></div>
                     </div>
