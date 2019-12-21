@@ -233,9 +233,9 @@ app.get(api_endpoint + '/topics/byforum/:forumId', function (req, res) {
     var query = undefined
 
     if(page == 0) {
-        query = models.Topic.find({level: 1, forum: req.params.forumId}).limit(perPage)
+        query = models.Topic.find({level: 1, forum: req.params.forumId}).limit(perPage).sort({createdAt: 'desc'})
     } else {
-        query = models.Topic.find({level: 1, forum: req.params.forumId}).skip(page*perPage).limit(perPage)
+        query = models.Topic.find({level: 1, forum: req.params.forumId}).skip(page*perPage).limit(perPage).sort({createdAt: 'desc'})
     }
 
     query.exec(function(err, data) {
@@ -867,7 +867,7 @@ const seedDb = async () => {
 }
 
 var server = null;
-var eraseDatabaseOnSync = true;
+var eraseDatabaseOnSync = false;
 
 if(env === 'prod') {
     eraseDatabaseOnSync = false;
