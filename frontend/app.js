@@ -465,34 +465,6 @@ var forumController = app.controller(
         $scope.loadTopics()
     }
 
-    /*$scope.$watch('searchDate', function (value) {
-        let liveDate = null
-
-        try {
-            liveDate = new Date(value);
-        } catch(e) {}
-        
-        if (!liveDate) {
-            $scope.error = "This is not a valid date";
-
-            console.log($scope.error)
-        } else {
-            console.log('This is A VALID DATE')
-
-            $scope.error = false;
-
-            ForumApiService.searchTopics(liveDate)
-            .then(res => {
-                console.log('Topics Search Result: ', res)
-
-                $scope.topics = res.data
-
-                $scope.reOrderTopics()
-            })
-            .catch(err => console.log(err))
-        }
-    })*/
-
     $scope.loadForum = function($event, $index, _forum) {
         console.log('loadForum $index: ', $index)
         console.log('loadForum, ev: ', $event, _forum)
@@ -706,7 +678,7 @@ var forumController = app.controller(
                 console.log('Discussion Forum Mode')
 
                 // Current Topic => Array => Topics List
-                $scope = [$scope.current_topic]
+                $scope.topics = [$scope.current_topic]
                 $scope.forumMode = ForumViewMode.TOPIC_MODE
 
                 console.log('$scope.forumMode = ForumViewMode.TOPIC_MODE')
