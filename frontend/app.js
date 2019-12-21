@@ -714,13 +714,8 @@ var forumController = app.controller(
             }
         } else {
             console.log('NowCasting Forum Mode')
+
+            $scope.forumMode = ForumViewMode.FORUM_MODE
         }
-    }
-
-    $scope.doneEditing = function(el){
-        forum.topic.text = $(el).val()
-
-        console.log('doneEditing:forum.topic: ', forum.topic)
-        console.log('doneEditing:el: ', el)
     }
 }]);

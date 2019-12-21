@@ -48,13 +48,13 @@ angular.module('ckeditorDirective', [])
             });
     
             ngModel.$render = function(value) {
-                //ckeditor.setData(ngModel.$viewValue);
+                ckeditor.setData(ngModel.$viewValue);
             };
 
-            var oldValue = null;
+            /* var oldValue = null;
             element.bind('focus',function() {
                 console.log('element.getAttribute(\'data-done-editing\'): ', element.getAttribute('data-done-editing'))
-                
+
                 scope.$apply(function() {
                     oldValue = ckeditor.getData();
                     
@@ -73,7 +73,7 @@ angular.module('ckeditorDirective', [])
                     
                     alert('ckeditor:blur Changed oldValue: ' + oldValue);
                 });         
-            });
+            });*/
         }
     };
 })
