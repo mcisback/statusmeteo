@@ -48,25 +48,25 @@ angular.module('forumApiService', [
     }
 
     api.addNewTopic = function(topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/topic', JSON.stringify(topic))
     }
 
     api.editTopic = function(topic_id, topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
 
         return $http.put(api.endpoint + '/topic/edit/' + topic_id, JSON.stringify(topic))
     }
 
     api.replyToTopic = function(parent_topic_id, topic) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
 
         return $http.post(api.endpoint + '/topic/reply/' + parent_topic_id, JSON.stringify(topic))
     }
 
     api.deleteTopic = function(topic_id) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
 
         return $http.delete(api.endpoint + '/topic/delete/' + topic_id)
     }
@@ -80,19 +80,28 @@ angular.module('forumApiService', [
     }
 
     api.login = function(user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/login', JSON.stringify(user))
     }
 
     api.registerNewUser = function(user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/user/register', JSON.stringify(user))
+        /*.then(res => {
+            console.log('forumApiService:$http: ', res)
+
+            if(res.status === 403) {
+                alert('Login Invalido O Scaduto, Rifare Il Login')
+            }
+
+            return res
+        })*/
     }
 
     api.editUser = function(_id, user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.put(api.endpoint + '/user/edit/' + _id, JSON.stringify(user))
     }
@@ -102,13 +111,13 @@ angular.module('forumApiService', [
     }
 
     api.deleteUser = function(_id, user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.delete(api.endpoint + '/user/delete/' + _id)
     }
 
     api.deleteManyUsers = function(_ids) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/user/deletemany/', JSON.stringify(_ids))
     }
@@ -118,7 +127,7 @@ angular.module('forumApiService', [
     }
 
     api.resetPassword = function(user) {
-        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/user/resetpassword/', JSON.stringify(user))
     }

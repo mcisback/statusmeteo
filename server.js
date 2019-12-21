@@ -634,7 +634,10 @@ app.post(api_endpoint + '/login', function (req, res) {
 
                     console.log('LOGIN Setting Exp time to: ', expTime)
 
-                    delete user['password']
+                    delete user.password
+                    user.password = undefined
+
+                    console.log('user after delete user.password: ', user)
 
                     const token = jwt.sign({id: user._id, user: user}, config[env].secretKey, { expiresIn: '24h' });
                     
