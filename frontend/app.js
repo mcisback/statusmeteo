@@ -203,6 +203,8 @@ var forumController = app.controller(
             $scope.current_page = 0
         }
 
+        $scope.loadTopics()
+
         console.log('current_page: ', $scope.current_page)
     }
 
@@ -534,8 +536,7 @@ var forumController = app.controller(
     }
 
     $scope.loadTopics = function() {
-
-        ForumApiService.getTopicsByForum($scope.currentForum._id)
+        ForumApiService.getTopicsByForum($scope.currentForum._id, $scope.current_page)
             .then(response => {
                 console.log('getTopicsByForum response', response)
 

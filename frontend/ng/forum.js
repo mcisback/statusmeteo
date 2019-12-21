@@ -35,8 +35,18 @@ angular.module('forumApiService', [
         }
     }
 
-    api.getTopicsByForum = function(forum_id) {
-        return $http.get(api.endpoint + '/topics/byforum/' + forum_id)
+    api.getTopicsByForum = function(forum_id, page=undefined) {
+        let _url = api.endpoint + '/topics/byforum/' + forum_id
+
+        if(page !== undefined && page !== '' && page !== 0) {
+            console.log('getTopicsByForum:page: ', page)
+
+            _url += '?p=' + page
+        }
+
+        console.log('getTopicsByForum:_url: ', _url)
+
+        return $http.get(_url)
     }
 
     api.getTopicsByParent = function(parent_id) {

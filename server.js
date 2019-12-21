@@ -219,8 +219,37 @@ app.get(api_endpoint + '/topics', function (req, res) {
 
 // Get all topics by forum id
 app.get(api_endpoint + '/topics/byforum/:forumId', function (req, res) {
-    models.Topic.find({level: 1, forum: req.params.forumId}, function(err, data) {
-        console.log('GET topics: ', err, data, req.params.forumId, data.length)
+    let page = req.query.p || 0
+    const perPage = 10
+
+    page = parseInt(page)
+
+    if(page < 0) {
+        page = 0
+    }
+
+    console.log('topics/byforum, page, perPage: ', page, perPage)
+
+    var query = undefined
+
+    if(page == 0) {
+        query = models.Topic.find({level: 1, forum: req.params.forumId}).limit(perPage)
+    } else {
+        query = models.Topic.find({level: 1, forum: req.params.forumId}).skip(page).limit(perPage)
+    }
+
+    query.exec(function(err, data) {
+        if(err) {
+            console.log('GET Topics Err: ', err)
+
+            res.sendStatus(500).json({
+                success: false,
+                data: {
+                    msg: err
+                }
+            })
+        }
+        console.log('GET Topics: ', err, data, req.params.forumId, data.length)
 
         res.json(data)
     })
