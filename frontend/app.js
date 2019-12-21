@@ -698,6 +698,7 @@ var forumController = app.controller(
 
         $scope.current_topic = topic
         console.log('$scope.current_topic: ', $scope.current_topic)
+        console.log('$scope.currentForum: ', $scope.currentForum)
 
         if($scope.currentForum.forum_type === ForumTypeEnum.DISCUSSION) {
 
