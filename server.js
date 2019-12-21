@@ -566,7 +566,8 @@ const seedDb = async () => {
         title: 'NowCasting',
         color: '#00f',
         order: 0,
-        is_active: true
+        is_active: true,
+        forum_type: 'NowCasting'
     })
 
     const forum2 = new models.Forum({

@@ -188,9 +188,9 @@
                                 <a class="dropdown-item" href="#" ng-click="forum.doLogout()">Logout</a>
                             </div>
                         </li>
-                        <li class="nav-item active" ng-if="isLogged()">
+                        <!--<li class="nav-item active" ng-if="isLogged()">
                             <a class="nav-link" href="#" style="color: rgba(0,0,0,.5);">Login Scade In {{getExpRemainingHours()}}h</a>
-                        </li>
+                        </li>-->
                     </ul>
                   <!-- <form class="form-inline my-2 my-lg-0">
                     <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
@@ -417,7 +417,7 @@
                         Subject: <input type="text" name="subject" ng-model="forum.topic.subtitle" class="form-control" />
                     </p>
 
-                    <textarea ng-model="forum.topic.text" id="ckeditor-add" ckeditor></textarea>
+                    <textarea ng-model="forum.topic.text" data-done-editing="doneEditing()" id="ckeditor-add" ckeditor></textarea>
 
                     <br>
 
@@ -506,7 +506,7 @@
                         Subject: <input type="text" name="subject" ng-model="current_topic.subtitle" class="form-control" />
                     </p>
 
-                    <textarea ng-model="current_topic.text" id="ckeditor-edit" ckeditor>{{current_topic.text}}</textarea>
+                    <textarea ng-model="current_topic.text" id="ckeditor-edit" ckeditor></textarea>
 
                     <br>
 
@@ -605,6 +605,12 @@
         <!--/ Modals -->
 
     </div>
+
+    <!-- Polyfills -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.2.20171210/classList.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/library.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/shim.min.js"></script>-->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

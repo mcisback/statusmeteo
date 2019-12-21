@@ -12,6 +12,16 @@
     })
 */
 
+const ForumTypeEnum = Object.freeze({
+    DISCUSSION: 'Discussion',
+    NOWCASTING: 'NowCasting'
+})
+
+const ForumViewMode = Object.freeze({
+    FORUM_MODE: 1,
+    TOPIC_MODE: 2
+})
+
 const sortDescByOrder = (a, b) => {
     var keyA = a.order,
         keyB = b.order;
@@ -137,6 +147,7 @@ var forumController = app.controller(
     $scope.current_modal = ''
     $scope.is_search = false
     $scope.search_date = ''
+    $scope.appUrl = GlobalConfig.appUrl
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
@@ -687,6 +698,29 @@ var forumController = app.controller(
 
         $scope.current_topic = topic
         console.log('$scope.current_topic: ', $scope.current_topic)
+
+        if($scope.currentForum.forum_type === ForumTypeEnum.DISCUSSION) {
+
+            if($scope.current_topic.level == 1){
+                console.log('Discussion Forum Mode')
+
+                // Current Topic => Array => Topics List
+                $scope = [$scope.current_topic]
+                $scope.forumMode = ForumViewMode.TOPIC_MODE
+
+                console.log('$scope.forumMode = ForumViewMode.TOPIC_MODE')
+
+                $scope.reOrderTopics()
+            }
+        } else {
+            console.log('NowCasting Forum Mode')
+        }
     }
 
+    $scope.doneEditing = function(el){
+        forum.topic.text = $(el).val()
+
+        console.log('doneEditing:forum.topic: ', forum.topic)
+        console.log('doneEditing:el: ', el)
+    }
 }]);
