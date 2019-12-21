@@ -228,61 +228,16 @@
             <hr>
 
             <script type="text/ng-template" id="forumHeadTemplate">
-                <!-- <span style="justify-self: flex-start;">Threads</span>
-                <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="openModal('new-topic-editor-modal')">Nuovo</button>-->
-                <!-- <button type="button" class="badge badge-pill badge-primary ml-3" style="justify-self: flex-end;" ng-click="sortAll(topics)">Sort</button> -->
-                <!--<table border="0" cellpadding="1" cellspacing="1" height="20" class="forum-head" style="min-width:540px; background-color:#215a94; border-color:#EFEFEF;" valign="absmiddle" width="100%">
-                    <tbody>
-                        <tr>
-                            <td>
-                                <a href="#">
-                                    <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('new-topic-editor-modal', true)">
-                                </a>
-                            </td>
-                            <td>
-                                <input src="assets/Blu_Refresh.gif" title="Aggiorna la pagina e applica i parametri" type="image" ng-click="loadTopics()">
-                            </td>
-                            <td class="Fix" nowrap="nowrap"><b>&nbsp;Search&nbsp;</b></td>
-                            <td>
-                                <input maxlength="25" name="find" style="width:160px; font-size: small; color: #000000; font-family: Verdana;" title="Ricerca messaggi" type="text" searchtopics>
-                            </td>
-                            <td class="Fix" nowrap="nowrap"><b>&nbsp;Data&nbsp;</b></td>
-                            <td class="Fix" nowrap="nowrap">
-                                <datepicker date-format="dd-MM-yyyy">
-                                    <input maxlength="20" name="FD" style="width:120px;" title="Ricerca messaggi per data" type="text" aria-haspopup="true" ng-model="search_date" ng-change="doSearchDate(this)" class="angular-datepicker-input">
-                                    <span class="mat-datepicker-toggle" matsuffix="">
-                                        <button aria-haspopup="true" mat-icon-button="" type="button" class="mat-icon-button" aria-label="Open calendar" tabindex="0" style="background-color: transparent; border: 0;">
-                                            <span class="mat-button-wrapper">
-                                                
-                                                <svg class="mat-datepicker-toggle-default-icon ng-star-inserted" fill="currentColor" focusable="false" height="24px" viewBox="0 0 24 24" width="24px">
-                                                    <path d="M0 0h24v24H0z" fill="none"></path>
-                                                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path>
-                                                </svg>
-                                            </span>
-                                            <div class="mat-button-ripple mat-ripple mat-button-ripple-round" matripple=""></div>
-                                            <div class="mat-button-focus-overlay"></div>
-                                        </button>
-                                    </span>
-                                </datepicker>
-                            </td>
-                            <td width="99%" ng-if="!is_search">&nbsp;</td>
-                            <td width="99%" ng-if="is_search" ng-click="doCancelSearch()" style="cursor: pointer; text-align: left;">
-                                <div class="rounded" style="width: 80%; text-align: center; background-color: cadetblue; padding: 0.2rem;">
-                                    <div class="rounded-circle" style="background-color: white; color: darkgrey; font-family: Arial, sans-serif; width: 1rem; height: 1rem; display: inline-block; line-height: 1rem;">X</div> Cancella Ricerca
-                                </div>
-                            </td>
-                            <td class="Fix" nowrap="nowrap" style="font-size: small;"><b>&nbsp;Pag.N°&nbsp;</b></td>
-                            <td><input maxlength="3" name="Pg" style="width:16px;" title="Pagina Corrente" type="text" ng-model="current_page"></td>
-                            <td align="left"><img src="assets/Blu_Prev.gif" title="Pagina precedente" type="image" ng-click="forum.goToPreviousPage()"></td>
-                            <td align="right"><img src="assets/Blu_Next.gif" title="Pagina successiva" type="image" ng-click="forum.goToNextPage()"></td>
-                        </tr>
-                    </tbody>
-                </table>-->
                 <div class="table">
                     <div class="row">
-                        <div class="cell">
+                        <div class="cell" ng-if="forumMode === scopedForumViewMode.FORUM_MODE">
                             <a href="#">
                                 <img border="0" src="assets/Blu_NewMsg.gif" title="Inserisce un nuovo messaggio" ng-click="openModal('new-topic-editor-modal', true)">
+                            </a>
+                        </div>
+                        <div class="cell" ng-if="forumMode === scopedForumViewMode.TOPIC_MODE">
+                            <a href="#">
+                                <img border="0" src="assets/Blu_Home.gif" title="Torna Al Primo Livello" ng-click="goToLevelOne()">
                             </a>
                         </div>
                         <div class="cell">
@@ -342,11 +297,10 @@
                     </tr>
                 </thead>
                 <tbody ng-repeat="topic in topics" ng-if="topics.length > 0">
-
-            <!--<div class="container-fluid  pl-0 pr-0 pt-3 pb-3 forum">
-                <div class="container-fluid topic px-0" ng-repeat="topic in topics" ng-include="'topicTemplate'"></div>
-            </div>-->
-                    <tr style="display: flex; flex-flow: row; justify-content: center; background-color: white;">
+                    <!--<span ng-if="doHideTopic(topic)">doHideTopic() === true</span>
+                    <span ng-if="!doHideTopic(topic)">doHideTopic() === false</span>
+                    -->
+                    <tr ng-if="!doHideTopic(topic)" style="display: flex; flex-flow: row; justify-content: center; background-color: white;">
                         <td style="width:5%;">&nbsp;</td>
                         <td style="width: 60%; cursor: pointer;" ng-click="showTopicText($event, topic)">
                             <div style="width: 100%; margin-left: {{topic.level}}rem">
@@ -404,12 +358,14 @@
         <modal id="new-topic-editor-modal">
             <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
-                    <h1>Add New Topic</h1>
-                    <p class="alert alert-danger" ng-if="addNewTopicError">
-                        {{addNewTopicError}}
+                    <h1>Aggiungi Nuovo Argomento</h1>
+
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
                     </p>
-                    <p class="alert alert-success" ng-if="addNewTopicSuccess">
-                        {{addNewTopicSuccess}}
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
                     </p>
                     <p>
                         Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
@@ -441,13 +397,16 @@
         <modal id="add-topic-editor-modal">
             <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
-                    <h1>Add Topic</h1>
-                    <p class="alert alert-danger" ng-if="addTopicError">
-                        {{addTopicError}}
+                    <h1>Aggiungi Argomento</h1>
+
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
                     </p>
-                    <p class="alert alert-success" ng-if="addTopicSuccess">
-                        {{addTopicSuccess}}
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
                     </p>
+
                     <p>
                         Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
@@ -478,7 +437,16 @@
         <modal id="reply-topic-editor-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>Reply to: {{current_topic.title}}</h1>
+                    <h1>Rispondi A: {{current_topic.title}}</h1>
+
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
+                    </p>
+
                     <p>
                         Topic: <input type="text" name="topic" ng-model="forum.topic.title" class="form-control" />
                         <br>
@@ -500,6 +468,15 @@
             <div class="modal">
                 <div class="modal-body">
                     <h1>Edit Topic: {{current_topic.title}}</h1>
+
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
+                    </p>
+
                     <p>
                         Topic: <input type="text" name="topic" ng-model="current_topic.title" class="form-control" />
                         <br>
@@ -522,8 +499,12 @@
                 <div class="modal-body">
                     <h1>Login</h1>
 
-                    <p class="alert alert-danger" ng-if="loginErrorMsg">
-                        {{loginErrorMsg}}
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
                     </p>
 
                     <p>
@@ -534,7 +515,9 @@
 
                     <br>
 
-                    <a href="#" ng-click="openModal('register-user-modal')">Registrati</a>
+                    <a href="#" ng-click="closeCurrentModal(); openModal('register-user-modal')">Registrati</a>
+                    |
+                    <a href="#" ng-click="closeCurrentModal(); openModal('reset-password-modal')">Recupera Password</a>
 
                     <br>
                     <br>
@@ -547,17 +530,47 @@
             <div class="modal-background"></div>
         </modal>
 
+        <modal id="reset-password-modal">
+            <div class="modal">
+                <div class="modal-body">
+                    <h1>Recupera Password</h1>
+
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
+                    </p>
+
+                    <p>
+                        Username/Email: <input type="text" name="user" class="form-control" ng-model="forum.newUser.login" my-enter="forum.resetPassword(forum.newUser);" />
+                    </p>
+
+                    <br>
+                    <a href="#" ng-click="closeCurrentModal(); openModal('login-modal')">Login</a>
+                    <br>
+                    <br>
+                    <br>
+
+                    <button ng-click="forum.resetPassword(forum.newUser);" class="btn btn-primary">Recupera Password</button>
+                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+            <div class="modal-background"></div>
+        </modal>
+
         <modal id="register-user-modal">
             <div class="modal">
                 <div class="modal-body">
-                    <h1>Register New User</h1>
+                    <h1>Registrati</h1>
 
-                    <p class="alert alert-success" ng-if="registerSuccessMsg">
-                        {{registerSuccessMsg}}
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
                     </p>
                     
-                    <p class="alert alert-danger" ng-if="registerErrorMsg">
-                        {{registerErrorMsg}}
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
                     </p>
 
                     <p>
@@ -580,7 +593,16 @@
         <modal id="edit-user-modal">
             <div class="modal">
                 <div class="modal-body" ng-if="isLogged()">
-                    <h1>Edit User: {{current_user.username}}</h1>
+                    <h1>Modifica Profilo: {{current_user.username}}</h1>
+                    
+                    <p class="alert alert-success" ng-if="current_modal_msgs.successMsg">
+                        {{current_modal_msgs.successMsg}}
+                    </p>
+                    
+                    <p class="alert alert-danger" ng-if="current_modal_msgs.errorMsg">
+                        {{current_modal_msgs.errorMsg}}
+                    </p>
+
                     <p>
                         Username: <input type="text" name="username" ng-model="forum.newUser.username" ng-init="forum.newUser.username = current_user.username" class="form-control" />
                         <br>
@@ -610,7 +632,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.2.20171210/classList.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/library.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/shim.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/2.6.11/shim.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js" integrity="sha256-G7A4JrJjJlFqP0yamznwPjAApIKPkadeHfyIwiaa9e0=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

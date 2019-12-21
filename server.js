@@ -38,6 +38,30 @@ const connectDb = () => {
     return mongoose.connect(config[env].databaseUrl, { useNewUrlParser: true, useFindAndModify: false });
 }
 
+/**
+ * Send Email Using SendGrid
+ * Example Email: 
+ * const msg = {
+    to: 'test@example.com',
+    from: 'test@example.com',
+    subject: 'Sending with Twilio SendGrid is Fun',
+    text: 'and easy to do anywhere, even with Node.js',
+    html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+    };
+ */
+
+const sendEmail = (email) => {
+    console.log('Sending Email: ', email)
+
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(config[env].SENDGRID_API_KEY);
+    sgMail.send(email);
+}
+
+const genRandomString = () => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
 // Enable Cors
 app.use(cors())
 
@@ -427,23 +451,105 @@ app.post(api_endpoint + '/user/register', function (req, res) {
 
     console.log('Creating new user with data: ', req.body)
 
-    models.User.create(req.body, (err, doc) => {
-        console.log('err, doc: ', err, doc)
-
-        if(err) {
-            console.log('Create User Error!!! ')
+    models.User.findOne({$or: [
+        {email: req.body.email},
+        {username: req.body.username}
+    ]}).exec(function(err, user){
+        if (user) {
+            console.log('Found User Already Registered: ', user)
 
             res.json({success: false, data: {
-                msg: err
+                msg: 'L\'Utente Esiste Già'
             }})
-        } else {
-            console.log('Create User Success!!! ')
+        } //user already exists with email AND/OR phone.
+        else {
+            console.log('User Not Exists')
 
-            res.json({success: true, data: {
-                msg: doc
+            models.User.create(req.body, (err, doc) => {
+                console.log('err, doc: ', err, doc)
+        
+                if(err) {
+                    console.log('Create User Error!!! ')
+        
+                    res.json({success: false, data: {
+                        msg: err
+                    }})
+                } else {
+                    console.log('Create User Success!!! ')
+        
+                    sendEmail({
+                        to: doc.email,
+                        from: 'no-reply@' + config[env].domain,
+                        subject: 'Grazie Per Esserti Registrato A StatusMeteo',
+                        text: `Il Tuo User e': ${doc.username}`,
+                        html: `Il Tuo User e':  <b>${doc.username}</b>`
+                    })
+        
+                    res.json({success: true, data: {
+                        msg: doc
+                    }})
+                }
+            })
+        }
+    });
+})
+
+// Reset Password
+app.post(api_endpoint + '/user/resetpassword', function (req, res) {
+    // res.json({"msg": "Not Yet Implemented"})
+
+    console.log('Resetting Password For User: ', req.body)
+
+    models.User.findOne({$or: [
+        {email: req.body.login},
+        {username: req.body.login}
+    ]}).exec(function(err, user){
+        if (user) {
+            console.log('Reset Password Found User: ', user)
+
+            const newPassword = genRandomString()
+
+            console.log('Reset Password New Password: ', newPassword)
+
+            models.User.updateOne(
+            {
+                _id: mongoose.Types.ObjectId(user._id)
+            },
+            {
+                $set: {
+                    password: newPassword
+                }
+            }, function(err, doc) {
+
+                if(err) {
+                    console.log('Setting New Password Failed: ', err)
+
+                    res.json({success: false, data: {
+                        msg: err
+                    }})
+                }
+
+                console.log('Setting New Password Success: ', doc)
+
+                sendEmail({
+                    to: user.email,
+                    from: 'no-reply@' + config[env].domain,
+                    subject: 'Recupero Password',
+                    text: `Il Tuo User e': ${user.username}\nLa Tua Nuova Password: ${newPassword}`,
+                    html: `Il Tuo User e':  <b>${user.username}</b>\n<br>La Tua Nuova Password: <b>${newPassword}</b>`
+                })
+
+                res.json({success: true, data: {
+                    msg: 'Ti &Egrave; Stata Spedita Una Nuova Password Via Email'
+                }})
+            })
+        } //user already exists with email AND/OR phone.
+        else {
+            res.json({success: false, data: {
+                msg: 'L\'Utente Non Esiste'
             }})
         }
-    })
+    });
 })
 
 // Delete user (for user or admin)
@@ -528,6 +634,8 @@ app.post(api_endpoint + '/login', function (req, res) {
 
                     console.log('LOGIN Setting Exp time to: ', expTime)
 
+                    delete user['password']
+
                     const token = jwt.sign({id: user._id, user: user}, config[env].secretKey, { expiresIn: '24h' });
                     
                     res.json({success: true, data: {msg: "user found!!!", user: user, token: token, exptime: expTime.getTime()}});
@@ -556,7 +664,7 @@ const seedDb = async () => {
     const normalUser = new models.User({
         username: 'normaluser',
         password: 'normaluser',
-        email: 'normaluser@gmail.com',
+        email: 'normaluser@yopmail.com',
         group_id: 4001,
         is_admin: false,
         registered_at: new Date().getTime()

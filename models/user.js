@@ -1,24 +1,3 @@
-/*
-exports.users = [
-    {
-        id: 1001,
-        group_id: 4001,
-        name: 'cibio123',
-        pass: 'asdrubale123',
-        is_admin: false,
-        registered_at: 1566830237984,
-    },
-    {
-        id: 1001,
-        group_id: 4001,
-        name: 'statusmeteo',
-        pass: 'password',
-        is_admin: false,
-        registered_at: 1566830238000,
-    }
-]
-*/
-
 const mongoose = require('mongoose')
 
 const bcrypt = require('bcrypt')
@@ -35,11 +14,6 @@ const userSchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    /*group_id: {
-        type: Number,
-        unique: false,
-        default: 4001
-    },*/
     password: {
         type: String,
         unique: false,
@@ -52,9 +26,37 @@ const userSchema = new mongoose.Schema({
     }
 }, {timestamps: true})
 
+const hashPassword = (password) => {
+    const salt = bcrypt.genSaltSync(saltRounds)
+    
+    return bcrypt.hashSync(password, saltRounds)
+}
+
 userSchema.pre('save', function(next){
-    this.password = bcrypt.hashSync(this.password, saltRounds)
+    this.password = hashPassword(this.password)
     next()
+})
+
+userSchema.pre('updateOne', function(next){
+    let data = this.getUpdate()
+    const password = data.$set.password;
+
+    console.log('Called userSchema.updateOne: ', password)
+    if (!password) {
+        console.log('updateOne empty password')
+
+        return next();
+    }
+    try {
+        data.$set.password = hashPassword(password);
+
+        this.update({}, data).exec()
+        next();
+    } catch (error) {
+        console.log('update Error: ', error)
+
+        return next(error);
+    }
 })
 
 userSchema.statics.findByLogin = async function (login) {

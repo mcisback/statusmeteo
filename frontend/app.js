@@ -18,8 +18,8 @@ const ForumTypeEnum = Object.freeze({
 })
 
 const ForumViewMode = Object.freeze({
-    FORUM_MODE: 1,
-    TOPIC_MODE: 2
+    FORUM_MODE: 'F',
+    TOPIC_MODE: 'T'
 })
 
 const sortDescByOrder = (a, b) => {
@@ -145,9 +145,13 @@ var forumController = app.controller(
     $scope.current_page = 0
     $scope.current_topic = {}
     $scope.current_modal = ''
+    $scope.current_modal_msgs = {}
     $scope.is_search = false
     $scope.search_date = ''
     $scope.appUrl = GlobalConfig.appUrl
+    $scope.scopedForumTypeEnum = ForumTypeEnum
+    $scope.scopedForumViewMode = ForumViewMode
+    $scope.forumMode = ForumViewMode.FORUM_MODE
 
     $scope.isLogged = function() {
         // Check if user in local storage ecc...
@@ -337,7 +341,7 @@ var forumController = app.controller(
                 } else {
                     console.log('Login Failed: ' + response.data.data.msg)
 
-                    $scope.loginErrorMsg = response.data.data.msg || 'Errore Login Sconosciuto'
+                    $scope.current_modal_msgs.errorMsg = response.data.data.msg || 'Errore Login Sconosciuto'
                 }
             })
     }
@@ -359,18 +363,38 @@ var forumController = app.controller(
                 if(res.data.success === true) {
                     console.log('Register Success')
 
-                    $scope.registerErrorMsg = undefined
-                    $scope.registerSuccessMsg = 'Utente Creato, prego fare il login'
+                    $scope.current_modal_msgs.errorMsg = undefined
+                    $scope.current_modal_msgs.successMsg = 'Utente Creato, prego fare il login'
                 } else {
                     console.log('Register Failed')
 
-                    if (res.data.data.msg.errmsg.includes('duplicate key')) {
-                        $scope.registerSuccessMsg = undefined
-                        $scope.registerErrorMsg = 'Registrazione Fallita: Email o Utente già in uso'
+                    if (res.data.data.msg.includes('duplicate key')) {
+                        $scope.current_modal_msgs.successMsg = undefined
+                        $scope.current_modal_msgs.errorMsg = 'Registrazione Fallita: Email o Utente già in uso'
                     } else {
-                        $scope.registerSuccessMsg = undefined
-                        $scope.registerErrorMsg = 'Registrazione Fallita: ' + res.data.data.msg.errmsg
+                        $scope.current_modal_msgs.successMsg = undefined
+                        $scope.current_modal_msgs.errorMsg = 'Registrazione Fallita: ' + res.data.data.msg
                     }
+                }
+            })
+            .catch(err => console.log('Register New User Error: ', err))
+    }
+
+    forum.resetPassword = function(user) {
+        ForumApiService.resetPassword(user)
+            .then(res => {
+                console.log('Reset Password Response: ', res)
+
+                if(res.data.success === true) {
+                    console.log('Reset Password Success')
+
+                    $scope.current_modal_msgs.errorMsg = undefined
+                    $scope.current_modal_msgs.successMsg = res.data.data.msg
+                } else {
+                    console.log('Reset Password Failed')
+
+                    $scope.current_modal_msgs.successMsg = undefined
+                    $scope.current_modal_msgs.errorMsg = 'Recupero Password Fallito: ' + res.data.data.msg
                 }
             })
             .catch(err => console.log('Register New User Error: ', err))
@@ -474,6 +498,7 @@ var forumController = app.controller(
         _forum.is_active = true;
 
         $scope.currentForum = _forum
+        $scope.forumMode = ForumViewMode.FORUM_MODE
 
         console.log('New Current Forum is: ', $scope.currentForum)
 
@@ -493,9 +518,16 @@ var forumController = app.controller(
 
     $scope.reOrderTopics = function() {
         // if($scope.topics.length > 0){
-            $scope.sortAll($scope.topics)
 
-            $scope.topics = $scope.flat($scope.topics)
+            if($scope.currentForum.forum_type === ForumTypeEnum.DISCUSSION) {
+                $scope.sortAll($scope.topics)
+
+                $scope.topics = $scope.flat($scope.topics)
+            } else if($scope.currentForum.forum_type === ForumTypeEnum.NOWCASTING) {
+                console.log('reOrderTopics:$scope.topics: ', $scope.topics)
+                
+                $scope.topics = $scope.flat($scope.topics.sort(sortDesc))
+            }
         // } else {
             // console.log('NO TOPICS !!!')
         // }
@@ -510,8 +542,20 @@ var forumController = app.controller(
                 $scope.topics = response.data
                 // $scope.topics = $scope.rebuildTopics(response.data)
 
+                console.log('loadTopics():$scope.current_topic: ', $scope.current_topic)
+                console.log('loadTopics():$scope.forumMode: ', $scope.forumMode)
+
+                //$scope.forumMode = ForumViewMode.FORUM_MODE
+
                 console.log('$scope.topics: ', $scope.topics)
-                
+
+                if($scope.forumMode === ForumViewMode.TOPIC_MODE) {
+                    if($scope.current_topic !== undefined) {
+                        $scope.current_topic = $scope.topics.find((el) => el._id === $scope.current_topic._id)
+                        $scope.topics = [$scope.current_topic]
+                    }
+                }
+
                 $scope.reOrderTopics()
             })
     }
@@ -638,6 +682,8 @@ var forumController = app.controller(
     $scope.closeCurrentModal = function(){
         console.log('closeCurrentModal is: ',  $scope.current_modal)
 
+        $scope.current_modal_msgs = {}
+
         $scope.closeModal($scope.current_modal)
     }
 
@@ -690,5 +736,30 @@ var forumController = app.controller(
 
             $scope.forumMode = ForumViewMode.FORUM_MODE
         }
+    }
+
+    $scope.doHideTopic = function(topic) {
+
+        // console.log('$scope.doHideTopic:$scope.currentForum: ', $scope.currentForum)
+
+        if($scope.currentForum !== undefined && topic !== undefined){
+            let res = $scope.currentForum.forum_type === ForumTypeEnum.DISCUSSION 
+            res = res && $scope.forumMode === ForumViewMode.FORUM_MODE
+            res = res && topic.level > 1
+
+            // console.log('doHideTopic: ', res)
+
+            return res;
+        }
+
+        return false;
+    }
+    
+    $scope.goToLevelOne = function() {
+        console.log('Going Home To Level One...')
+
+        $scope.forumMode = ForumViewMode.FORUM_MODE
+
+        $scope.loadTopics()
     }
 }]);

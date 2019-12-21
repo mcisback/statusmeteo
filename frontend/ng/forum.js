@@ -117,5 +117,11 @@ angular.module('forumApiService', [
         return $http.get(api.endpoint + '/getfields/' + collection)
     }
 
+    api.resetPassword = function(user) {
+        $http.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.post(api.endpoint + '/user/resetpassword/', JSON.stringify(user))
+    }
+
     return api
 }])
