@@ -727,7 +727,7 @@ const seedDb = async () => {
 }
 
 var server = null;
-const eraseDatabaseOnSync = true;
+var eraseDatabaseOnSync = true;
 
 if(env === 'prod') {
     eraseDatabaseOnSync = false;
