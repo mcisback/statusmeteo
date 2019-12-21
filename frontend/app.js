@@ -760,6 +760,7 @@ var forumController = app.controller(
         console.log('Going Home To Level One...')
 
         $scope.forumMode = ForumViewMode.FORUM_MODE
+        $scope.current_page = 0
 
         $scope.loadTopics()
     }

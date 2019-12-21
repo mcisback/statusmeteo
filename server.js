@@ -161,9 +161,11 @@ const checkAndSetAdmin = (req, res, next) => {
 
     if(req.decoded.user.is_admin === true) {
         req.is_admin = true
-
-        next()
+    } else {
+        req.is_admin = false
     }
+
+    next()
 }
 
 // Serve Static Files and JS App
@@ -334,19 +336,38 @@ app.post(api_endpoint + '/topic', checkToken, function (req, res) {
 })
 
 // Delete Topic
-app.delete(api_endpoint + '/topic/delete/:topicId', checkToken, function (req, res) {
+app.delete(api_endpoint + '/topic/delete/:topicId', checkToken, checkAndSetAdmin, function (req, res) {
+    console.log('[+] Called DELETE TOPIC')
 
-    models.Topic.findByIdAndRemove(req.params.topicId, req.body, function(err, doc) {
-        if (err) {
-            let r = {success:  false, data: {msg: err}}
+    models.Topic.findById(req.params.topicId).exec(function(err, doc) {
+        if(err) {
+            console.log('Delete Topic FindById Error: ', err)
 
-            console.log('Topic DELETE Error: ', r)
+            res.json({success: false, data: {msg: err}})
+        }
 
-            res.json(r)
+        console.log('Found Topic: ', doc)
+        console.log('doc.user.toString(): ', doc.user.toString())
+        console.log('req.decoded.user._id: ', req.decoded.user._id)
+
+        if((doc.user.toString() === req.decoded.user._id) || req.is_admin) {
+            console.log('You Are The Onwer ! (or admin)')
+
+            doc.remove(function(err, _doc) {
+                if (err) {    
+                    console.log('Topic DELETE Error: ', err)
+    
+                    res.json({success:  false, data: {msg: err}})
+                } else {
+                    console.log('Topic DELETE Success', _doc)
+    
+                    res.json({success: true, data: {msg: _doc}})
+                }
+            })
         } else {
-            console.log('Topic DELETE Success', doc)
+            console.log('You Aren\'t the Owner')
 
-            res.json({success: true, data: {msg: doc}})
+            res.status(403).json({success:  false, data: {msg: 'You Aren\'t the Owner'}})
         }
     })
 })

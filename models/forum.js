@@ -1,16 +1,3 @@
-/*
-{
-    id: 1001,
-    parent: 0,
-    title:'AngularJS',
-    subtitle: 'subtitle',
-    text: "Lorem Ipsum dsadnoasdnoasdmoa",
-    timestamp: 2022,
-    maxTm: 0,
-    topics: []
-},
-*/
-
 const mongoose = require('mongoose')
 
 const forumSchema = new mongoose.Schema({
