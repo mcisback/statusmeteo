@@ -235,7 +235,7 @@ app.get(api_endpoint + '/topics/byforum/:forumId', function (req, res) {
     if(page == 0) {
         query = models.Topic.find({level: 1, forum: req.params.forumId}).limit(perPage)
     } else {
-        query = models.Topic.find({level: 1, forum: req.params.forumId}).skip(page).limit(perPage)
+        query = models.Topic.find({level: 1, forum: req.params.forumId}).skip(page*perPage).limit(perPage)
     }
 
     query.exec(function(err, data) {
