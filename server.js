@@ -729,17 +729,25 @@ const seedDb = async () => {
 var server = null;
 const eraseDatabaseOnSync = true;
 
+if(env === 'prod') {
+    eraseDatabaseOnSync = false;
+}
+
+console.log('[+] Do eraseDatabaseOnSync ? ', eraseDatabaseOnSync)
+
 connectDb().then(async () => {
     if (eraseDatabaseOnSync) {
         console.log('[+] Erasing Database On Sync')
+        
         await Promise.all([
           models.User.deleteMany({}),
           models.Forum.deleteMany({}),
           models.Topic.deleteMany({}),
         ]);
+        
+        console.log('[+] Seeding DB On Sync')
+        seedDb()
     }
-
-    seedDb()
 
     server = app.listen(config[env].port, () => {
         const host = server.address().address
