@@ -552,6 +552,12 @@ app.post(api_endpoint + '/user/register', function (req, res) {
     });
 })
 
+app.post(api_endpoint + '/user/isvalid', checkToken, function(req, res) {
+    console.log('Check If User Token Is Still Valid')
+
+    res.json({success: true, data:{msg:'Token Is Valid'}})
+})
+
 // Reset Password
 app.post(api_endpoint + '/user/resetpassword', function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})

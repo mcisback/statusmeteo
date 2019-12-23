@@ -1,5 +1,5 @@
 angular.module('userService', [])
-.service('UserService', function() {
+.service('UserService', ['$http', function($http) {
     var current_user = {}; // array of modals on the page
     var service = {};
     var jwt_token = '';
@@ -40,6 +40,14 @@ angular.module('userService', [])
         return service.getUserAndToken().exp > (Date.now() * 1000)
     }
 
+    service.isUserTokenValid = function(token, ForumApiService) {
+        ForumApiService.setJWTToken(token)
+
+        $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
+        
+        return $http.post(api.endpoint + '/user/isvalid', JSON.stringify({}))
+    }
+
     service.isAdmin = function() {
         return this.isLogged() && this.getUserAndToken().user.is_admin
     }
@@ -50,4 +58,4 @@ angular.module('userService', [])
     }
 
     return service;
-})
+}])

@@ -569,12 +569,47 @@ var forumController = app.controller(
                 $scope.reOrderTopics()
             })
     }
+
+    forum.checkIfUserTokenIsValid = function(isValid, isInvalid, isNotLoggedIn) {
+        if($scope.isLogged()) {
+            // TODO: Check if user token is still valid
+
+            UserService.isUserTokenValid($scope.jwt_token, ForumApiService)
+                .then(res => {
+                    isValid(res)
+                })
+                .catch(err => {
+                    isInvalid(err)
+                })
+        } else {
+            isNotLoggedIn()
+        }
+    }
     
     // Do Onload Things...
+    /**
+     * TODO: If is Logged, check if user token is still valid
+     */
     $scope.onload = function() {
         console.log('$scope.onload triggered')
         console.log('GlobalConfig is: ', GlobalConfig)
         console.log('$scope.is_search: ',$scope.is_search)
+
+        forum.checkIfUserTokenIsValid(
+            (res) => {
+                console.log('User Token: Is Still Valid', res)
+            },
+            (err) => {
+                console.log('User Token: Is Probably Not Valid', err)
+
+                alert('Errore: Login Scaduto, Fai Il Login Di Nuovo Per Favore')
+
+                forum.doLogout()
+            },
+            () => {
+                console.log('User Token: Not Logged In')
+            }
+        )
 
         ForumApiService.getForums()
             .then(response => {
@@ -672,7 +707,24 @@ var forumController = app.controller(
             if(!$scope.isLogged()) {
                 $scope.current_modal = 'login-modal'
             } else {
-                $scope.current_modal = id
+                
+                forum.checkIfUserTokenIsValid(
+                    (res) => {
+                        console.log('User Token: Is Still Valid', res)
+
+                        $scope.current_modal = id
+                    },
+                    (err) => {
+                        console.log('User Token: Is Probably Not Valid', err)
+        
+                        alert('Errore: Login Scaduto, Fai Il Login Di Nuovo Per Favore')
+        
+                        forum.doLogout()
+                    },
+                    () => {
+                        console.log('User Token: Not Logged In')
+                    }
+                )
             }
         } else {
             $scope.current_modal = id
