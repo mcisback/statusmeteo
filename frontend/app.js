@@ -702,10 +702,17 @@ var forumController = app.controller(
         })
     }
 
+    $scope.openCurrentModal = function() {
+        console.log('openModal current_modal is: ', $scope.current_modal)
+
+        ModalService.Open($scope.current_modal)
+    }
+
     $scope.openModal = function(id, checkIfLogged=false){
         if(checkIfLogged) {
             if(!$scope.isLogged()) {
                 $scope.current_modal = 'login-modal'
+                $scope.openCurrentModal()
             } else {
                 
                 forum.checkIfUserTokenIsValid(
@@ -713,6 +720,7 @@ var forumController = app.controller(
                         console.log('User Token: Is Still Valid', res)
 
                         $scope.current_modal = id
+                        $scope.openCurrentModal()
                     },
                     (err) => {
                         console.log('User Token: Is Probably Not Valid', err)
@@ -728,11 +736,8 @@ var forumController = app.controller(
             }
         } else {
             $scope.current_modal = id
+            $scope.openCurrentModal()
         }
-
-        console.log('openModal current_modal is: ', $scope.current_modal)
-
-        ModalService.Open($scope.current_modal)
     }
 
     $scope.closeModal = function(id){
