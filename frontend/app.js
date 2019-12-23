@@ -294,7 +294,11 @@ var forumController = app.controller(
 
                 $scope.closeCurrentModal()
             })
-            .catch(err => console.log(err))
+            .catch(err => {
+                console.log('editTopic Error: ', err)
+
+                alert('Errore: ' + err.data.data.msg)
+            })
     }
 
     forum.deleteTopic = function(topic) {
@@ -312,6 +316,11 @@ var forumController = app.controller(
                 console.log('deleteTopic response: ', response)
 
                 $scope.loadTopics()
+            })
+            .catch(err => {
+                console.log('DeleteTopic Err: ', err)
+
+                alert('Errore: ' + err.data.data.msg)
             })
         }
     }

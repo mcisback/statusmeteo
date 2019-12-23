@@ -62,6 +62,31 @@ const genRandomString = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+const checkIfUserIsTopicOwner = function(req, res, callback) {
+    models.Topic.findById(req.params.topicId).exec(function(err, doc) {
+        if(err) {
+            console.log('FindById Error: ', err)
+
+            res.json({success: false, data: {msg: err}})
+        }
+
+        console.log('Found Topic: ', doc)
+        console.log('req.decoded.user: ', req.decoded.user)
+        console.log('doc.user.toString(): ', doc.user.toString())
+        console.log('req.decoded.user._id: ', req.decoded.user._id)
+
+        if((doc.user.toString() === req.decoded.user._id) || req.is_admin) {
+            console.log('You Are The Onwer ! (or admin)')
+
+            callback(doc, req, res)
+        } else {
+            console.log('You Aren\'t the Owner')
+
+            res.status(403).json({success:  false, data: {msg: 'You Aren\'t the Owner'}})
+        }
+    })
+}
+
 // Enable Cors
 app.use(cors())
 
@@ -339,62 +364,45 @@ app.post(api_endpoint + '/topic', checkToken, function (req, res) {
 app.delete(api_endpoint + '/topic/delete/:topicId', checkToken, checkAndSetAdmin, function (req, res) {
     console.log('[+] Called DELETE TOPIC')
 
-    models.Topic.findById(req.params.topicId).exec(function(err, doc) {
-        if(err) {
-            console.log('Delete Topic FindById Error: ', err)
-
-            res.json({success: false, data: {msg: err}})
-        }
-
-        console.log('Found Topic: ', doc)
-        console.log('doc.user.toString(): ', doc.user.toString())
-        console.log('req.decoded.user._id: ', req.decoded.user._id)
-
-        if((doc.user.toString() === req.decoded.user._id) || req.is_admin) {
-            console.log('You Are The Onwer ! (or admin)')
-
-            doc.remove(function(err, _doc) {
-                if (err) {    
-                    console.log('Topic DELETE Error: ', err)
-    
-                    res.json({success:  false, data: {msg: err}})
-                } else {
-                    console.log('Topic DELETE Success', _doc)
-    
-                    res.json({success: true, data: {msg: _doc}})
-                }
-            })
-        } else {
-            console.log('You Aren\'t the Owner')
-
-            res.status(403).json({success:  false, data: {msg: 'You Aren\'t the Owner'}})
-        }
+    checkIfUserIsTopicOwner(req, res, (doc, req, res) => {
+        doc.remove(function(err, _doc) {
+            if (err) {    
+                console.log('Topic DELETE Error: ', err)
+        
+                res.json({success:  false, data: {msg: err}})
+            } else {
+                console.log('Topic DELETE Success', _doc)
+        
+                res.json({success: true, data: {msg: _doc}})
+            }
+        })
     })
 })
 
 // Modify Topic
 // TODO Check Topic Owner
-app.put(api_endpoint + '/topic/edit/:topicId', checkToken, function (req, res) {
+app.put(api_endpoint + '/topic/edit/:topicId', checkToken, checkAndSetAdmin, function (req, res) {
 
     console.log('Modifying TOPIC ID: ', req.params.topicId)
     // console.log('req, res: ', req, res)
 
     console.log('New Data: ', req.body)
 
-    models.Topic.findOneAndUpdate({_id: req.params.topicId}, req.body, {new: true}, (err, doc) => {
-        if (err) {
-            let r = {success:  false, data:{msg: err}}
-
-            console.log('Topic UPDATE Error: ', r)
-
-            res.json(r)
-        } else {
-            console.log('UPDATE Topic Success')
-
-            res.json({success: true, data:{msg: doc}})
-        }
+    checkIfUserIsTopicOwner(req, res, (__doc, req, res) => {
+        models.Topic.findOneAndUpdate({_id: req.params.topicId}, req.body, {new: true}, (err, doc) => {
+            if (err) {
+                let r = {success:  false, data:{msg: err}}
+    
+                console.log('Topic UPDATE Error: ', r)
+    
+                res.json(r)
+            } else {
+                console.log('UPDATE Topic Success')
+    
+                res.json({success: true, data:{msg: doc}})
+            }
+        })
     })
-    // res.json({"msg": "Not Yet Implemented"})
 })
 
 // Get one topic by id
