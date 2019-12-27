@@ -980,5 +980,6 @@ connectDb().then(async () => {
         const port = server.address().port
         
         console.log('Forum app listening at http://%s:%d', host, port)
+        console.log('Config is: ', config)
     })
 })
