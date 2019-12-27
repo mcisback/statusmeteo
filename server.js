@@ -736,7 +736,7 @@ const getFileSizeInBytes = function(filename) {
 app.post(api_endpoint + '/img/ck4upload', upload.single('upload'), checkToken, function (req, res) {
     console.log('IMG UPLOAD REQUEST')
 
-    console.log('IMG REQ FILE: ', req.file)
+    // console.log('IMG REQ FILE: ')
 
     if(req.file === null || req.file === undefined) {
         console.log('IMG REQ IS NULL')
