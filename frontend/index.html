@@ -351,7 +351,7 @@
 
         <!-- Modals -->
 
-        <modal id="new-topic-editor-modal">
+        <modal id="new-topic-editor-modal" ng-init="forum.topic = {}">
             <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
                     <h1>Aggiungi Nuovo Argomento</h1>
@@ -373,8 +373,8 @@
 
                     <br>
 
-                    <button ng-click="forum.addNewTopic(forum.topic);" class="btn btn-primary">Salva</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.addNewTopic(forum.topic);forum.topic={}" class="btn btn-primary">Salva</button>
+                    <button ng-click="closeCurrentModal();forum.topic={}" class="btn btn-primary">Chiudi</button>
                 </div>
             </div>
             <div class="modal" ng-if="!isLogged()">
@@ -390,7 +390,7 @@
             <div class="modal-background"></div>
         </modal>
 
-        <modal id="add-topic-editor-modal">
+        <modal id="add-topic-editor-modal" ng-init="forum.topic = {}">
             <div class="modal" ng-if="isLogged()">
                 <div class="modal-body">
                     <h1>Aggiungi Argomento</h1>
@@ -413,8 +413,8 @@
 
                     <br>
 
-                    <button ng-click="forum.addTopicSameLevel(current_topic, forum.topic);" class="btn btn-primary">Salva</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.addTopicSameLevel(current_topic, forum.topic);forum.topic={}" class="btn btn-primary">Salva</button>
+                    <button ng-click="closeCurrentModal();forum.topic={}" class="btn btn-primary">Chiudi</button>
                 </div>
             </div>
             <div class="modal" ng-if="!isLogged()">
@@ -430,7 +430,7 @@
             <div class="modal-background"></div>
         </modal>
 
-        <modal id="reply-topic-editor-modal">
+        <modal id="reply-topic-editor-modal" ng-init="forum.topic = {}">
             <div class="modal">
                 <div class="modal-body">
                     <h1>Rispondi A: {{current_topic.title}}</h1>
@@ -453,8 +453,8 @@
 
                     <br>
 
-                    <button ng-click="forum.replyToTopic(current_topic, forum.topic);" class="btn btn-primary">Rispondi</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.replyToTopic(current_topic, forum.topic);forum.topic={}" class="btn btn-primary">Rispondi</button>
+                    <button ng-click="closeCurrentModal();forum.topic={}" class="btn btn-primary">Chiudi</button>
                 </div>
             </div>
             <div class="modal-background"></div>
@@ -490,7 +490,7 @@
             <div class="modal-background"></div>
         </modal>
 
-        <modal id="login-modal">
+        <modal id="login-modal" ng-init="forum.newUser={}">
             <div class="modal">
                 <div class="modal-body">
                     <h1>Login</h1>
@@ -519,14 +519,14 @@
                     <br>
                     <br>
 
-                    <button ng-click="forum.login(forum.newUser);" class="btn btn-primary">Login</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.login(forum.newUser);forum.newUser={}" class="btn btn-primary">Login</button>
+                    <button ng-click="closeCurrentModal();forum.newUser={}" class="btn btn-primary">Chiudi</button>
                 </div>
             </div>
             <div class="modal-background"></div>
         </modal>
 
-        <modal id="reset-password-modal">
+        <modal id="reset-password-modal" ng-init="forum.newUser={}">
             <div class="modal">
                 <div class="modal-body">
                     <h1>Recupera Password</h1>
@@ -549,14 +549,14 @@
                     <br>
                     <br>
 
-                    <button ng-click="forum.resetPassword(forum.newUser);" class="btn btn-primary">Recupera Password</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.resetPassword(forum.newUser);forum.newUser={}" class="btn btn-primary">Recupera Password</button>
+                    <button ng-click="closeCurrentModal();forum.newUser={}" class="btn btn-primary">Chiudi</button>
                 </div>
             </div>
             <div class="modal-background"></div>
         </modal>
 
-        <modal id="register-user-modal">
+        <modal id="register-user-modal" ng-init="forum.newUser={}">
             <div class="modal">
                 <div class="modal-body" ng-if="!isLogged()">
                     <h1>Registrati</h1>
@@ -579,8 +579,8 @@
 
                     <br>
 
-                    <button ng-click="forum.registerNewUser(forum.newUser);" class="btn btn-primary">Register</button>
-                    <button ng-click="closeCurrentModal();" class="btn btn-primary">Chiudi</button>
+                    <button ng-click="forum.registerNewUser(forum.newUser);forum.newUser={}" class="btn btn-primary">Register</button>
+                    <button ng-click="closeCurrentModal();forum.newUser={}" class="btn btn-primary">Chiudi</button>
                 </div>
                 <div class="modal-body" ng-if="isLogged()">
                     <h1>Sei Gi&agrave; loggato, non puoi iscriverti due volte</h1>
