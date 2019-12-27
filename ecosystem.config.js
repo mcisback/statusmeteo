@@ -8,7 +8,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: true,
-      max_memory_restart: '1G',
+      max_memory_restart: '1.5G',
       env: {
         NODE_ENV: 'dev'
       },
