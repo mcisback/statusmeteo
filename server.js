@@ -720,7 +720,7 @@ app.post(api_endpoint + '/login', function (req, res) {
 // Upload Image
 
 const multer = require('multer')
-const upload = multer({limits: {fileSize: 2000000 },dest:'uploads/'})
+const upload = multer({limits: {fileSize: 2000000 },dest:config[env].uploadsDir})
 
 const getFileSizeInBytes = function(filename) {
     const stats = fs.statSync(filename);
@@ -748,7 +748,7 @@ app.post(api_endpoint + '/img/ck4upload', upload.single('upload'), checkToken, f
 
     const imgFileSize = getFileSizeInBytes(req.file.path)
 
-    if(imgFileSize.mb >= 16) {
+    if(imgFileSize.mb >= 16 || err.code === 'LIMIT_FILE_SIZE') {
         console.log('Image File Too Large (>=16MB)')
 
         res.json({success: false, data:{msg: 'Image File Too Large (>=16MB)'}})
