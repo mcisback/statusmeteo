@@ -720,7 +720,7 @@ app.post(api_endpoint + '/login', function (req, res) {
 // Upload Image
 
 const multer = require('multer')
-const upload = multer({limits: {fileSize: 2000000 },dest:config[env].uploadsDir})
+const upload = multer({limits: {fileSize: 2000000 },dest:config[env].uploadDir})
 
 const getFileSizeInBytes = function(filename) {
     const stats = fs.statSync(filename);
