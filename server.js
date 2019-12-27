@@ -748,7 +748,7 @@ app.post(api_endpoint + '/img/ck4upload', upload.single('upload'), checkToken, f
 
     const imgFileSize = getFileSizeInBytes(req.file.path)
 
-    if(imgFileSize.mb >= 16 || err.code === 'LIMIT_FILE_SIZE') {
+    if(imgFileSize.mb >= 16) {
         console.log('Image File Too Large (>=16MB)')
 
         res.json({success: false, data:{msg: 'Image File Too Large (>=16MB)'}})
