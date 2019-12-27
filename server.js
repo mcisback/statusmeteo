@@ -107,8 +107,8 @@ app.use(cors())
 // app.set('view engine', 'ejs')
 
 // Read Post JSON Body
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Use publicDir for static files
 app.use(express.static(__dirname + config[env].publicDir))
@@ -124,7 +124,8 @@ app.get('/ng/client-config.js', (req, res, next) => {
             appName: 'StatusMeteo',
             appVersion: 2.0,
             check: 'oh yes',
-            appUrl: '${config[env].appUrl}'
+            appUrl: '${config[env].appUrl}',
+            apiEndpointUrl: '${config[env].apiEndpointUrl}'
         })
     `)
 })
@@ -501,8 +502,6 @@ app.get(api_endpoint + '/getfields/:collection', checkToken, checkIfUserIsAdmin,
     res.json({success: true, data:{msg: 'Success', data: _data}})
 })
 
-
-
 // Create New user (for registration)
 app.post(api_endpoint + '/user/register', function (req, res) {
     // res.json({"msg": "Not Yet Implemented"})
@@ -716,6 +715,58 @@ app.post(api_endpoint + '/login', function (req, res) {
 
             res.json({success: false, data: err})
         })
+})
+
+// Upload Image
+
+const multer = require('multer')
+const upload = multer({limits: {fileSize: 2000000 },dest:'uploads/'})
+
+const getFileSizeInBytes = function(filename) {
+    const stats = fs.statSync(filename);
+    const fileSizeInBytes = stats.size;
+    return {
+        b: fileSizeInBytes,
+        kb: fileSizeInBytes / 1024,
+        mb: fileSizeInBytes / (1024 * 1024)
+    };
+}
+
+// TODO: Check Login
+app.post(api_endpoint + '/img/ck4upload', upload.single('upload'), checkToken, function (req, res) {
+    console.log('IMG UPLOAD REQUEST')
+
+    console.log('IMG REQ FILE: ', req.file)
+
+    if(req.file === null || req.file === undefined) {
+        console.log('IMG REQ IS NULL')
+
+        res.json({success: false, data:{msg: 'Empty File'}})
+    }
+
+    const { uploadFileToImgbb } = require('./imgbb');
+
+    const imgFileSize = getFileSizeInBytes(req.file.path)
+
+    if(imgFileSize.mb >= 16) {
+        console.log('Image File Too Large (>=16MB)')
+
+        res.json({success: false, data:{msg: 'Image File Too Large (>=16MB)'}})
+    } else {
+        uploadFileToImgbb(config[env].IMGBB_API_KEY, req.file.path)
+        .then(imgbb => {
+            console.log('IMGBB RESP: ', imgbb)
+
+            // {"fileName":"60262863_137578847346261_6238600232771227_n.jpg","uploaded":1,"url":"https:\/\/ckeditor.com\/apps\/ckfinder\/userfiles\/images\/60262863_137578847346261_6238600232771227_n.jpg"}
+
+            res.json({fileName: imgbb.title, uploaded: 1, url: imgbb.display_url})
+        })
+        .catch(error => {
+            console.log('IMGBB ERR: ', error)
+
+            res.json({success: false, data:{msg: error}})
+        })
+    }
 })
 
 const seedDb = async () => {

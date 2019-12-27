@@ -10,7 +10,7 @@ angular.module('ckeditorDirective', [])
             if (element[0].type !== 'textarea') 
                 return;
 
-            var editorOptions;
+            var editorOptions = undefined;
             if (attr.ckeditor === 'minimal') {
                 // minimal editor
                 editorOptions = {
@@ -27,14 +27,42 @@ angular.module('ckeditorDirective', [])
             } else {
                 // regular editor
                 editorOptions = {
-                    filebrowserImageUploadUrl: scope.appUrl + '/upload',
+                    filebrowserImageUploadUrl: scope.apiEndpointUrl + '/img/ck4upload',
+                    filebrowserUploadMethod: 'xhr',             
+                    fileTools_requestHeaders: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Authorization': 'Bearer ' + window.localStorage.getItem('token') 
+                    },
                     removeButtons: 'About,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Save,CreateDiv,Language,BidiLtr,BidiRtl,Flash,Iframe,addFile,Styles',
-                    extraPlugins: 'simpleuploads,imagesfromword'
+                    extraPlugins: 'uploadwidget,uploadimage'
+                    /* simpleUpload: {
+                        // The URL that the images are uploaded to.
+                        uploadUrl: scope.appUrl + '/img/upload',
+                        
+                        // Headers sent along with the XMLHttpRequest to the upload server.
+                        headers: {
+                            // 'X-CSRF-TOKEN': 'CSFR-Token',
+                            // Authorization: 'Bearer <JSON Web Token>'
+                        }
+                    } */
                 };
             }
 
+            // Enable local "abbr" plugin from /myplugins/abbr/ folder.
+            // CKEDITOR.plugins.addExternal( 'abbr', '/myplugins/abbr/', 'plugin.js' );
+            // extraPlugins needs to be set too.
+            /* CKEDITOR.replace( 'editor1', {
+                extraPlugins: 'abbr'
+            } ); */
+
+            CKEDITOR.plugins.addExternal(  'uploadwidget', '/ng/uploadwidget/', 'plugin.js' );
+            CKEDITOR.plugins.addExternal(  'uploadimage', '/ng/uploadimage/', 'plugin.js' );
+
             // enable ckeditor
-            var ckeditor = CKEDITOR.replace( element[0].id );
+            var ckeditor = CKEDITOR.replace(
+                element[0].id,
+                editorOptions
+            );
 
             // update ngModel on change
             ckeditor.on('change', function () {

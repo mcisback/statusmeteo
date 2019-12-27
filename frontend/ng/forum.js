@@ -99,15 +99,6 @@ angular.module('forumApiService', [
         $http.defaults.headers.common['Content-Type'] = 'application/json;charset=utf-8'
         
         return $http.post(api.endpoint + '/user/register', JSON.stringify(user))
-        /*.then(res => {
-            console.log('forumApiService:$http: ', res)
-
-            if(res.status === 403) {
-                alert('Login Invalido O Scaduto, Rifare Il Login')
-            }
-
-            return res
-        })*/
     }
 
     api.editUser = function(_id, user) {

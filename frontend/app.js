@@ -149,6 +149,7 @@ var forumController = app.controller(
     $scope.is_search = false
     $scope.search_date = ''
     $scope.appUrl = GlobalConfig.appUrl
+    $scope.apiEndpointUrl = GlobalConfig.apiEndpointUrl
     $scope.scopedForumTypeEnum = ForumTypeEnum
     $scope.scopedForumViewMode = ForumViewMode
     $scope.forumMode = ForumViewMode.FORUM_MODE
@@ -217,12 +218,6 @@ var forumController = app.controller(
         newTopic.user = $scope.current_user._id
         newTopic.username = $scope.current_user.username
         newTopic.forum = $scope.currentForum._id
-
-        // parentTopic.topics.push(newTopic)
-
-        // $scope.loadTopics()
-
-        // TODO Save to database
 
         ForumApiService.replyToTopic(parentTopic._id, newTopic)
             .then(res => {
