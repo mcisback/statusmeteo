@@ -16,8 +16,8 @@ module.exports = {
     },
     prod: {
         host: 'localhost',
-        appUrl: 'https://statusmeteo.marcocaggiano.com',
-        apiEndpointUrl: 'https://statusmeteo.marcocaggiano.com/api',
+        appUrl: 'https://domain.com',
+        apiEndpointUrl: 'https://domain.com/api',
         apiEndpoint: '/api',
         domain: 'domain.com',
         port: 8082,
